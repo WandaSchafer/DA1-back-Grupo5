@@ -4,15 +4,20 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/activities")
 @CrossOrigin
 public class ActivityController {
 
     private final ActivityRepository activityRepository;
+    private final ActivityAvailabilityService activityAvailabilityService;
 
-    public ActivityController(ActivityRepository activityRepository) {
+    public ActivityController(ActivityRepository activityRepository,
+                              ActivityAvailabilityService activityAvailabilityService) {
         this.activityRepository = activityRepository;
+        this.activityAvailabilityService = activityAvailabilityService;
     }
 
     @GetMapping
@@ -27,5 +32,10 @@ public class ActivityController {
     public Activity getActivityById(@PathVariable Long id) {
         return activityRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Actividad no encontrada"));
+    }
+
+    @GetMapping("/{id}/availability")
+    public List<AvailabilitySlotResponse> getAvailability(@PathVariable Long id) {
+        return activityAvailabilityService.getAvailability(id);
     }
 }
