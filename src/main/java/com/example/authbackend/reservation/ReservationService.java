@@ -4,7 +4,12 @@ import com.example.authbackend.activity.*;
 import com.example.authbackend.user.User;
 import com.example.authbackend.user.UserRepository;
 import jakarta.transaction.Transactional;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -48,6 +53,18 @@ public class ReservationService {
                         request.getTime()
                 )
                 .orElseThrow(() -> new RuntimeException("Horario no disponible"));
+        if (reservationRepository.existsByUserIdAndActivityIdAndAvailability_DateAndAvailability_TimeAndStatus(
+                user.getId(),
+                request.getActivityId(),
+                request.getDate(),
+                request.getTime(),
+                ReservationStatus.CONFIRMED
+        )) {
+        throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Ya tenés una reserva activa para esta actividad en ese horario"
+        );
+        }
 
         if (availability.getAvailableSlots() < request.getParticipants()) {
             throw new RuntimeException("No hay cupos");
@@ -74,18 +91,34 @@ public class ReservationService {
     public ReservationResponse cancelReservation(Long id) {
 
         Reservation r = reservationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("No encontrada"));
+                .orElseThrow(() -> new RuntimeException("Reserva no encontrada"));
+
+        if (r.getStatus() == ReservationStatus.CANCELLED) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "La reserva ya fue cancelada"
+                );
+        }
+
+                if (r.getStatus() == ReservationStatus.FINISHED) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "No se puede cancelar una reserva finalizada"
+                );
+        }
+
+        ActivityAvailability availability = r.getAvailability();
+
+        int newReservedSlots = availability.getReservedSlots() - r.getParticipants();
+        availability.setReservedSlots(Math.max(newReservedSlots, 0));
+        availabilityRepository.save(availability);
 
         r.setStatus(ReservationStatus.CANCELLED);
 
-        ActivityAvailability availability = r.getAvailability();
-        availability.setReservedSlots(
-                availability.getReservedSlots() - r.getParticipants()
-        );
-        availabilityRepository.save(availability);
+        Reservation saved = reservationRepository.save(r);
 
-        return map(reservationRepository.save(r));
-    }
+        return map(saved);
+        }
 
     public List<ReservationResponse> getMyReservations() {
 

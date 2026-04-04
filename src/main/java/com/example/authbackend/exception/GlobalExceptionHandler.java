@@ -12,6 +12,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -83,6 +84,17 @@ public class GlobalExceptionHandler {
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Error interno",
                 "Ocurrio un error inesperado",
+                request.getRequestURI(),
+                null
+        );
+    }
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse> handleResponseStatusException(ResponseStatusException ex,
+                                                                    HttpServletRequest request) {
+        return buildResponse(
+                HttpStatus.valueOf(ex.getStatusCode().value()),
+                ex.getStatusCode().toString(),
+                ex.getReason() != null ? ex.getReason() : "Error en la solicitud",
                 request.getRequestURI(),
                 null
         );
