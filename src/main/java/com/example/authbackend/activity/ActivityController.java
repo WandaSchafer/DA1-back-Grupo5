@@ -1,30 +1,31 @@
 package com.example.authbackend.activity;
 
-
-import com.example.authbackend.activity.ActivityDetailResponse;
-import com.example.authbackend.activity.ActivityListItemResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/activities")
 @CrossOrigin
 public class ActivityController {
 
-    private final ActivityService service;
+    private final ActivityRepository activityRepository;
 
-    public ActivityController(ActivityService service) {
-        this.service = service;
+    public ActivityController(ActivityRepository activityRepository) {
+        this.activityRepository = activityRepository;
     }
 
     @GetMapping
-    public List<ActivityListItemResponse> getAll() {
-        return service.getAllActivities();
+    public Page<Activity> getActivities(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return activityRepository.findAll(PageRequest.of(page, size));
     }
 
     @GetMapping("/{id}")
-    public ActivityDetailResponse getById(@PathVariable Long id) {
-        return service.getActivityById(id);
+    public Activity getActivityById(@PathVariable Long id) {
+        return activityRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Actividad no encontrada"));
     }
 }
