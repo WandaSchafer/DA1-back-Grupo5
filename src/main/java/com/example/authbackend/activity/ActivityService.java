@@ -1,7 +1,6 @@
 package com.example.authbackend.activity;
 
-import com.example.authbackend.activity.ActivityListItemResponse;
-import com.example.authbackend.activity.ActivityDetailResponse;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,12 +19,11 @@ public class ActivityService {
                 .map(a -> new ActivityListItemResponse(
                         a.getId(),
                         a.getName(),
-                        a.getCity(),
-                        a.getCountry(),
-                        a.getDay(),
-                        a.getDate() != null ? a.getDate().toString() : null,
-                        a.getTime() != null ? a.getTime().toString() : null,
-                        a.getSpotsLeft(),
+                        a.getDestination(),
+                        a.getCategory(),
+                        a.getDuration(),
+                        a.getPrice(),
+                        a.getAvailableSlots(),
                         a.getImageUrl()
                 ))
                 .toList();
@@ -39,13 +37,11 @@ public class ActivityService {
                 a.getId(),
                 a.getName(),
                 a.getDescription(),
-                a.getCity(),
-                a.getCountry(),
-                a.getDay(),
-                a.getDate() != null ? a.getDate().toString() : null,
-                a.getTime() != null ? a.getTime().toString() : null,
-                a.getCapacity(),
-                a.getSpotsLeft(),
+                a.getDestination(),
+                a.getCategory(),
+                a.getDuration(),
+                a.getPrice(),
+                a.getAvailableSlots(),
                 a.getImageUrl()
         );
     }
