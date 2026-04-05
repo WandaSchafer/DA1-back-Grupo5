@@ -14,11 +14,20 @@ public class ReservationResponse {
     private ReservationStatus status;
     private String cancellationPolicy;
     private LocalDateTime createdAt;
+<<<<<<< HEAD
+=======
+    private double totalPrice;
+>>>>>>> 497e323 (Add reservation totalPrice and update DB password)
 
     public ReservationResponse(Long id, String activityName,
                                LocalDate date, LocalTime time,
                                int participants, ReservationStatus status,
+<<<<<<< HEAD
                                String cancellationPolicy, LocalDateTime createdAt) {
+=======
+                               String cancellationPolicy, LocalDateTime createdAt,
+                               double totalPrice) {
+>>>>>>> 497e323 (Add reservation totalPrice and update DB password)
         this.id = id;
         this.activityName = activityName;
         this.date = date;
@@ -27,6 +36,10 @@ public class ReservationResponse {
         this.status = status;
         this.cancellationPolicy = cancellationPolicy;
         this.createdAt = createdAt;
+<<<<<<< HEAD
+=======
+        this.totalPrice = totalPrice;
+>>>>>>> 497e323 (Add reservation totalPrice and update DB password)
     }
 
     public Long getId() {
@@ -60,4 +73,11 @@ public class ReservationResponse {
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
+<<<<<<< HEAD
+=======
+
+    public double getTotalPrice() {
+        return totalPrice;
+    }
+>>>>>>> 497e323 (Add reservation totalPrice and update DB password)
 }

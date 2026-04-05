@@ -139,7 +139,12 @@ public class ReservationService {
                 r.getParticipants(),
                 r.getStatus(),
                 "Cancelación hasta 24h antes",
+<<<<<<< HEAD
                 r.getCreatedAt()
+=======
+                r.getCreatedAt(),
+                r.getTotalPrice()
+>>>>>>> 497e323 (Add reservation totalPrice and update DB password)
         );
     }
 }
