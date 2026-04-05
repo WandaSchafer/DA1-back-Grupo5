@@ -89,11 +89,8 @@ public class Reservation {
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
-<<<<<<< HEAD
-=======
 
     public double getTotalPrice() {
         return (activity.getPrice() * participants);
     }
->>>>>>> 497e323 (Add reservation totalPrice and update DB password)
 }
