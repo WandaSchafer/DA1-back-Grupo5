@@ -8,21 +8,27 @@ public class ReservationResponse {
 
     private Long id;
     private String activityName;
+    private String destination;
+    private String imageUrl;
+
     private LocalDate date;
     private LocalTime time;
     private int participants;
     private ReservationStatus status;
+
     private String cancellationPolicy;
     private LocalDateTime createdAt;
     private double totalPrice;
 
-    public ReservationResponse(Long id, String activityName,
+    public ReservationResponse(Long id, String activityName, String destination, String imageUrl,
                                LocalDate date, LocalTime time,
                                int participants, ReservationStatus status,
                                String cancellationPolicy, LocalDateTime createdAt,
                                double totalPrice) {
         this.id = id;
         this.activityName = activityName;
+        this.destination = destination;
+        this.imageUrl = imageUrl;
         this.date = date;
         this.time = time;
         this.participants = participants;
@@ -38,6 +44,14 @@ public class ReservationResponse {
 
     public String getActivityName() {
         return activityName;
+    }
+
+    public String getDestination() {
+        return destination;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
     }
 
     public LocalDate getDate() {

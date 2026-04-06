@@ -30,6 +30,15 @@ public class User {
     @Column(nullable = false, length = 20)
     private Role role;
 
+    @Column(length = 30)
+    private String phone;
+
+    @Column(name = "profile_image_url", length = 255)
+    private String profileImageUrl;
+
+    @Column(name = "travel_preferences", length = 255)
+    private String travelPreferences;
+
     public Long getId() {
         return id;
     }
@@ -68,5 +77,29 @@ public class User {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public String getTravelPreferences() {
+        return travelPreferences;
+    }
+
+    public void setTravelPreferences(String travelPreferences) {
+        this.travelPreferences = travelPreferences;
     }
 }

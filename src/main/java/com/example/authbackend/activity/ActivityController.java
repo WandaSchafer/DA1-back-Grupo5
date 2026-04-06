@@ -13,11 +13,14 @@ public class ActivityController {
 
     private final ActivityRepository activityRepository;
     private final ActivityAvailabilityService activityAvailabilityService;
+    private final ActivityService activityService;
 
     public ActivityController(ActivityRepository activityRepository,
-                              ActivityAvailabilityService activityAvailabilityService) {
+                              ActivityAvailabilityService activityAvailabilityService,
+                              ActivityService activityService) {
         this.activityRepository = activityRepository;
         this.activityAvailabilityService = activityAvailabilityService;
+        this.activityService = activityService;
     }
 
     @GetMapping
@@ -26,6 +29,11 @@ public class ActivityController {
             @RequestParam(defaultValue = "10") int size
     ) {
         return activityRepository.findAll(PageRequest.of(page, size));
+    }
+
+    @GetMapping("/recommended")
+    public List<ActivityListItemResponse> getRecommendedActivities() {
+        return activityService.getRecommendedActivities();
     }
 
     @GetMapping("/{id}")

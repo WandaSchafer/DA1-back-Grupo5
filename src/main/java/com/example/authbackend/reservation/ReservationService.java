@@ -134,6 +134,8 @@ public class ReservationService {
         return new ReservationResponse(
                 r.getId(),
                 r.getActivity().getName(),
+                r.getActivity().getDestination(),
+                r.getActivity().getImageUrl(),
                 r.getAvailability().getDate(),
                 r.getAvailability().getTime(),
                 r.getParticipants(),
