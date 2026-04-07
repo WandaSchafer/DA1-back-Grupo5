@@ -6,9 +6,10 @@ import com.example.authbackend.user.UserRepository;
 import jakarta.transaction.Transactional;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -31,6 +32,26 @@ public class ReservationService {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Obtiene el usuario autenticado desde SecurityContext
+     */
+    private User getAuthenticatedUser() {
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        Authentication authentication = securityContext.getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            // Fallback a getDefaultUser() para compatibilidad
+            return getDefaultUser();
+        }
+
+        String email = authentication.getName();
+        return userRepository.findByEmail(email)
+                .orElse(getDefaultUser());
+    }
+
+    /**
+     * Obtiene el primer usuario registrado (fallback)
+     */
     private User getDefaultUser() {
         return userRepository.findAll()
                 .stream()
@@ -41,7 +62,7 @@ public class ReservationService {
     @Transactional
     public ReservationResponse createReservation(CreateReservationRequest request) {
 
-        User user = getDefaultUser();
+        User user = getAuthenticatedUser();
 
         Activity activity = activityRepository.findById(request.getActivityId())
                 .orElseThrow(() -> new RuntimeException("Actividad no encontrada"));
@@ -53,6 +74,7 @@ public class ReservationService {
                         request.getTime()
                 )
                 .orElseThrow(() -> new RuntimeException("Horario no disponible"));
+        
         if (reservationRepository.existsByUserIdAndActivityIdAndAvailability_DateAndAvailability_TimeAndStatus(
                 user.getId(),
                 request.getActivityId(),
@@ -60,10 +82,10 @@ public class ReservationService {
                 request.getTime(),
                 ReservationStatus.CONFIRMED
         )) {
-        throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Ya tenés una reserva activa para esta actividad en ese horario"
-        );
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Ya tenés una reserva activa para esta actividad en ese horario"
+            );
         }
 
         if (availability.getAvailableSlots() < request.getParticipants()) {
@@ -93,18 +115,27 @@ public class ReservationService {
         Reservation r = reservationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Reserva no encontrada"));
 
-        if (r.getStatus() == ReservationStatus.CANCELLED) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "La reserva ya fue cancelada"
-                );
+        // Verificar que el usuario autenticado sea dueño de la reserva
+        User user = getAuthenticatedUser();
+        if (!r.getUser().getId().equals(user.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "No tienes permiso para cancelar esta reserva"
+            );
         }
 
-                if (r.getStatus() == ReservationStatus.FINISHED) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "No se puede cancelar una reserva finalizada"
-                );
+        if (r.getStatus() == ReservationStatus.CANCELLED) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La reserva ya fue cancelada"
+            );
+        }
+
+        if (r.getStatus() == ReservationStatus.FINISHED) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "No se puede cancelar una reserva finalizada"
+            );
         }
 
         ActivityAvailability availability = r.getAvailability();
@@ -118,11 +149,11 @@ public class ReservationService {
         Reservation saved = reservationRepository.save(r);
 
         return map(saved);
-        }
+    }
 
     public List<ReservationResponse> getMyReservations() {
 
-        User user = getDefaultUser();
+        User user = getAuthenticatedUser();
 
         return reservationRepository.findByUserIdOrderByCreatedAtDesc(user.getId())
                 .stream()
