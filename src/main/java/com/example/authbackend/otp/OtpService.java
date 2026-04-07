@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class OtpService {
@@ -41,45 +42,76 @@ public class OtpService {
         this.otpExpirationMs = otpExpirationMs;
     }
 
+    @Transactional
     public MessageResponse requestOtp(OtpRequest request) {
+        LOGGER.warn("[OTP REQUEST] Solicitando OTP para email: {}", request.getEmail());
         User user = findUserByEmail(request.getEmail());
         generateAndStoreOtp(user.getEmail());
+        LOGGER.warn("[OTP REQUEST] OTP generado y guardado exitosamente");
         return new MessageResponse("OTP enviado correctamente");
     }
 
+    @Transactional
     public MessageResponse resendOtp(OtpRequest request) {
+        LOGGER.warn("[OTP RESEND] Reenviando OTP para email: {}", request.getEmail());
         User user = findUserByEmail(request.getEmail());
         generateAndStoreOtp(user.getEmail());
+        LOGGER.warn("[OTP RESEND] Nuevo OTP generado y guardado exitosamente");
         return new MessageResponse("Nuevo OTP enviado correctamente");
     }
 
+    @Transactional
     public AuthResponse verifyOtp(OtpVerifyRequest request) {
         String email = normalizeEmail(request.getEmail());
+        LOGGER.warn("\n[OTP VERIFY] Intentando verificar OTP para: {}", email);
+        
         User user = findUserByEmail(email);
         OtpEntry otpEntry = otpStore.findByEmail(email)
-                .orElseThrow(() -> new OtpValidationException("No hay un OTP activo para este email"));
+                .orElseThrow(() -> {
+                    LOGGER.warn("[OTP VERIFY] ✗ FALLO: No existe OTP para: {}", email);
+                    return new OtpValidationException("No hay un OTP activo para este email");
+                });
 
+        LOGGER.warn("[OTP VERIFY] ✓ OTP encontrado en BD para: {}", email);
+        LOGGER.warn("[OTP VERIFY] Expira a: {} (Ahora es: {})", otpEntry.getExpiresAt(), Instant.now());
+        
         if (otpEntry.getExpiresAt().isBefore(Instant.now())) {
+            LOGGER.warn("[OTP VERIFY] ✗ FALLO: OTP EXPIRADO para: {}", email);
             otpStore.remove(email);
             throw new OtpValidationException("El OTP ha expirado");
         }
 
+        LOGGER.warn("[OTP VERIFY] Código recibido: {}. Comparando con hash BD...", request.getOtp());
+        
         if (!passwordEncoder.matches(request.getOtp(), otpEntry.getHashedOtp())) {
+            LOGGER.warn("[OTP VERIFY] ✗ FALLO: CÓDIGO INCORRECTO para: {}", email);
             throw new OtpValidationException("El OTP es invalido");
         }
 
+        LOGGER.warn("[OTP VERIFY] ✓ EXITO: CÓDIGO CORRECTO Y VÁLIDO para: {}. Generando token...", email);
         otpStore.remove(email);
         return authTokenService.generateAuthResponse(user);
     }
 
     private void generateAndStoreOtp(String email) {
+        String normalizedEmail = normalizeEmail(email);
         String otp = generateOtp();
         Instant expiresAt = Instant.now().plusMillis(otpExpirationMs);
         String hashedOtp = passwordEncoder.encode(otp);
 
-        otpStore.save(email, new OtpEntry(hashedOtp, expiresAt));
+        LOGGER.warn("\n\n========================================");
+        LOGGER.warn("OTP GENERADO PARA: {}", normalizedEmail);
+        LOGGER.warn("CÓDIGO OTP: {}  <-- COPIA ESTE CÓDIGO", otp);
+        LOGGER.warn("Válido por 5 minutos (hasta las {})", expiresAt);
+        LOGGER.warn("========================================\n");
 
-        LOGGER.info("Mock OTP email sent to {} with code {}. Expires at {}", email, otp, expiresAt);
+        try {
+            otpStore.save(normalizedEmail, new OtpEntry(normalizedEmail, hashedOtp, expiresAt));
+            LOGGER.warn("✓ OTP GUARDADO CORRECTAMENTE en BD para: {}", normalizedEmail);
+        } catch (Exception e) {
+            LOGGER.error("✗ ERROR al guardar OTP en BD: {}", e.getMessage(), e);
+            throw new RuntimeException("No se pudo guardar el OTP", e);
+        }
     }
 
     private User findUserByEmail(String email) {

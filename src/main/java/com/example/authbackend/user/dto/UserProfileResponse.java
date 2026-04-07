@@ -7,7 +7,8 @@ public class UserProfileResponse {
     private String email;
     private String phone;
     private String profileImageUrl;
-    private String travelPreferences;
+    private String travelPreferences; // Mantener por retrocompatibilidad
+    private UserPreferenceResponse preferences;
 
     public UserProfileResponse() {
     }
@@ -19,6 +20,12 @@ public class UserProfileResponse {
         this.phone = phone;
         this.profileImageUrl = profileImageUrl;
         this.travelPreferences = travelPreferences;
+    }
+
+    public UserProfileResponse(Long id, String username, String email, String phone, String profileImageUrl, 
+                               String travelPreferences, UserPreferenceResponse preferences) {
+        this(id, username, email, phone, profileImageUrl, travelPreferences);
+        this.preferences = preferences;
     }
 
     public Long getId() {
@@ -67,5 +74,13 @@ public class UserProfileResponse {
 
     public void setTravelPreferences(String travelPreferences) {
         this.travelPreferences = travelPreferences;
+    }
+
+    public UserPreferenceResponse getPreferences() {
+        return preferences;
+    }
+
+    public void setPreferences(UserPreferenceResponse preferences) {
+        this.preferences = preferences;
     }
 }

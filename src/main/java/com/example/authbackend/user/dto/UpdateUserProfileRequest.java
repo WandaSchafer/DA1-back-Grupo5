@@ -6,6 +6,7 @@ public class UpdateUserProfileRequest {
     private String phone;
     private String profileImageUrl;
     private String travelPreferences;
+    private UserPreferenceRequest preferences;
 
     public UpdateUserProfileRequest() {
     }
@@ -40,5 +41,13 @@ public class UpdateUserProfileRequest {
 
     public void setTravelPreferences(String travelPreferences) {
         this.travelPreferences = travelPreferences;
+    }
+
+    public UserPreferenceRequest getPreferences() {
+        return preferences;
+    }
+
+    public void setPreferences(UserPreferenceRequest preferences) {
+        this.preferences = preferences;
     }
 }
