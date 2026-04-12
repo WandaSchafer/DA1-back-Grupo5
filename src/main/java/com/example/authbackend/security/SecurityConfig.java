@@ -39,6 +39,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/activities/**").permitAll() //Cambiar esto cuando se vea sesion
                         .requestMatchers("/api/v1/reservations/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/v1/users/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

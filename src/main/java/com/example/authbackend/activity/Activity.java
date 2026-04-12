@@ -26,6 +26,9 @@ public class Activity {
     @Column(name = "image_url")
     private String imageUrl;
 
+    @Column(name = "guide_name")
+    private String guideName;
+
     public Activity() {}
 
     public Long getId() {
@@ -99,4 +102,12 @@ public class Activity {
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
     }
+
+    public String getGuideName() {
+    return guideName;
+}
+
+public void setGuideName(String guideName) {
+    this.guideName = guideName;
+}
 }
