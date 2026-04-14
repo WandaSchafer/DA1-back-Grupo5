@@ -7,6 +7,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,6 +21,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private final JwtService jwtService;
     private final CustomUserDetailsService userDetailsService;
 
@@ -40,10 +43,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             String token = authHeader.substring(7);
-            String username = jwtService.extractUsername(token);
+            String subject = jwtService.extractUsername(token);  // Ahora contiene email
 
-            if (StringUtils.hasText(username) && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            if (StringUtils.hasText(subject) && SecurityContextHolder.getContext().getAuthentication() == null) {
+                // Busca por email primero (es lo que está en el JWT)
+                // Si por alguna razón no es email, busca por username como fallback
+                UserDetails userDetails;
+                if (subject.contains("@")) {
+                    try {
+                        userDetails = userDetailsService.loadUserByUsername(subject);  // Busca por email
+                    } catch (UsernameNotFoundException e) {
+                        LOGGER.warn("[JWT] Usuario con email {} no encontrado, intentando como username", subject);
+                        userDetails = userDetailsService.loadUserByUsername(subject);
+                    }
+                } else {
+                    userDetails = userDetailsService.loadUserByUsername(subject);  // Busca por username
+                }
 
                 if (jwtService.isTokenValid(token, userDetails)) {
                     UsernamePasswordAuthenticationToken authenticationToken =
