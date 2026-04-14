@@ -118,28 +118,6 @@ CREATE TABLE IF NOT EXISTS otp_entries (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
--- TABLA: ratings
--- Descripción: Calificaciones de actividades y guías por usuarios
--- Validaciones: Solo dentro de 48 horas después de completada la actividad
--- =====================================================
-CREATE TABLE IF NOT EXISTS ratings (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    user_id BIGINT NOT NULL,
-    activity_id BIGINT NOT NULL,
-    activity_score INT NOT NULL CHECK (activity_score >= 1 AND activity_score <= 5),
-    guide_score INT NOT NULL CHECK (guide_score >= 1 AND guide_score <= 5),
-    comment VARCHAR(300),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (activity_id) REFERENCES activities(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_user_activity_rating (user_id, activity_id),
-    INDEX idx_activity (activity_id),
-    INDEX idx_user (user_id),
-    INDEX idx_created_at (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- =====================================================
 -- ÍNDICES ADICIONALES PARA OPTIMIZACIÓN
 -- =====================================================
 
