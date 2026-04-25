@@ -47,26 +47,24 @@ public class RatingService {
 
         // Verificar que el usuario completó una reservación para esta actividad
         List<Reservation> completedReservations = reservationRepository
-                .findByUserIdAndActivityIdAndStatus(currentUser.getId(), activityId, ReservationStatus.COMPLETED);
+                .findByUserIdAndActivityIdAndStatus(currentUser.getId(), activityId, ReservationStatus.FINISHED);
 
         if (completedReservations.isEmpty()) {
             logger.warn("User {} attempted to rate activity {} without completing it", currentUser.getId(), activityId);
             throw new BadRequestException("No has completado una reservación para esta actividad");
         }
 
-        // Validar que la calificación esté dentro de las 48 horas
+        // Validar que la actividad ya haya ocurrido (fecha pasada)
         Reservation latestReservation = completedReservations.get(0);
-        LocalDateTime completionTime = latestReservation.getEndTime();
+        LocalDateTime activityDateTime = LocalDateTime.of(
+            latestReservation.getAvailability().getDate(),
+            latestReservation.getAvailability().getTime()
+        );
         LocalDateTime now = LocalDateTime.now();
-        
-        if (completionTime != null) {
-            long hoursElapsed = java.time.temporal.ChronoUnit.HOURS.between(completionTime, now);
-            if (hoursElapsed > RATING_WINDOW_HOURS) {
-                logger.warn("User {} tried to rate activity {} outside 48-hour window ({}h elapsed)", 
-                        currentUser.getId(), activityId, hoursElapsed);
-                throw new BadRequestException(
-                        "Solo puedes calificar dentro de 48 horas después de completar la actividad");
-            }
+
+        if (activityDateTime.isAfter(now)) {
+            logger.warn("User {} tried to rate activity {} that hasn't occurred yet", currentUser.getId(), activityId);
+            throw new BadRequestException("No puedes calificar una actividad que aún no ha ocurrido");
         }
 
         // Verificar que no existe ya una calificación

@@ -1,14 +1,14 @@
 package com.example.authbackend.rating;
 
-import com.example.authbackend.security.JwtService;
 import com.example.authbackend.user.User;
-import com.example.authbackend.user.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -26,11 +26,16 @@ public class RatingController {
     @Autowired
     private RatingService ratingService;
 
-    @Autowired
-    private JwtService jwtService;
-
-    @Autowired
-    private UserRepository userRepository;
+    /**
+     * Obtiene el usuario autenticado desde SecurityContext
+     */
+    private User getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof com.example.authbackend.security.user.CustomUserDetails customUserDetails) {
+            return customUserDetails.getUser(); // Asumiendo que CustomUserDetails tiene getUser()
+        }
+        throw new RuntimeException("Usuario no autenticado");
+    }
 
     /**
      * Crea una nueva calificación para una actividad completada.
@@ -40,16 +45,12 @@ public class RatingController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> createRating(
             @PathVariable Long activityId,
-            @Valid @RequestBody CreateRatingRequest request,
-            @RequestHeader("Authorization") String token) {
-        
+            @Valid @RequestBody CreateRatingRequest request) {
+
         try {
             logger.info("POST /api/v1/ratings/activity/{} - Creating rating", activityId);
-            
-            String username = jwtService.extractUsername(token.substring(7));
-            User currentUser = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
+            User currentUser = getAuthenticatedUser();
             RatingResponse response = ratingService.createRating(activityId, currentUser, request);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
             
@@ -107,14 +108,11 @@ public class RatingController {
      */
     @GetMapping("/my-ratings")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> getMyRatings(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<?> getMyRatings() {
         try {
             logger.info("GET /api/v1/ratings/my-ratings - Fetching my ratings");
-            
-            String username = jwtService.extractUsername(token.substring(7));
-            User currentUser = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
+            User currentUser = getAuthenticatedUser();
             List<RatingResponse> ratings = ratingService.getMyRatings(currentUser);
             return ResponseEntity.ok(ratings);
             
@@ -132,18 +130,13 @@ public class RatingController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> deleteRating(
-            @PathVariable Long id,
-            @RequestHeader("Authorization") String token) {
+    public ResponseEntity<?> deleteRating(@PathVariable Long id) {
         try {
             logger.info("DELETE /api/v1/ratings/{} - Deleting rating", id);
-            
-            String username = jwtService.extractUsername(token.substring(7));
-            User currentUser = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
+            User currentUser = getAuthenticatedUser();
             ratingService.deleteRating(id, currentUser);
-            
+
             Map<String, String> response = new HashMap<>();
             response.put("message", "Calificación eliminada exitosamente");
             return ResponseEntity.ok(response);

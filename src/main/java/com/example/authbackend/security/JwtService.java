@@ -28,7 +28,8 @@ public class JwtService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", userDetails.getRole().name());
         claims.put("email", userDetails.getEmail());
-        return buildToken(claims, userDetails);
+        // Usar email como subject del JWT para que authentication.getName() devuelva email
+        return buildToken(claims, userDetails.getEmail(), userDetails.getUsername());
     }
 
     public String extractUsername(String token) {
@@ -41,17 +42,22 @@ public class JwtService {
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        String username = extractUsername(token);
-        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+        String subject = extractUsername(token);
+        // Valida contra email si es CustomUserDetails, sino contra username
+        if (userDetails instanceof com.example.authbackend.security.user.CustomUserDetails customUserDetails) {
+            return subject.equals(customUserDetails.getEmail()) && !isTokenExpired(token);
+        }
+        return subject.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 
-    private String buildToken(Map<String, Object> claims, UserDetails userDetails) {
+    private String buildToken(Map<String, Object> claims, String subject, String username) {
         Date now = new Date();
         Date expiration = new Date(now.getTime() + jwtExpirationMs);
 
         return Jwts.builder()
                 .claims(claims)
-                .subject(userDetails.getUsername())
+                .subject(subject)  // Ahora usa email como subject
+                .claim("username", username)  // Guardar username como claim adicional
                 .issuedAt(now)
                 .expiration(expiration)
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
