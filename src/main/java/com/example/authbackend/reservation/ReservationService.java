@@ -34,6 +34,7 @@ public class ReservationService {
 
     /**
      * Obtiene el usuario autenticado desde SecurityContext
+     * Soporta búsqueda por email o username (en caso de que getName() devuelva username del JWT)
      */
     private User getAuthenticatedUser() {
         SecurityContext securityContext = SecurityContextHolder.getContext();
@@ -44,8 +45,24 @@ public class ReservationService {
             return getDefaultUser();
         }
 
-        String email = authentication.getName();
-        return userRepository.findByEmail(email)
+        // Intenta extraer email directamente si es CustomUserDetails
+        if (authentication.getPrincipal() instanceof com.example.authbackend.security.user.CustomUserDetails customUserDetails) {
+            String email = customUserDetails.getEmail();
+            return userRepository.findByEmail(email)
+                    .orElse(getDefaultUser());
+        }
+
+        // Fallback: authentication.getName() devuelve username o email del JWT
+        String principal = authentication.getName();
+
+        // Intenta buscar por email primero (si contiene @)
+        if (principal.contains("@")) {
+            return userRepository.findByEmail(principal)
+                    .orElse(getDefaultUser());
+        }
+
+        // Si no contiene @, busca por username (insensible a mayúsculas)
+        return userRepository.findByUsername(principal)
                 .orElse(getDefaultUser());
     }
 

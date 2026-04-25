@@ -85,6 +85,7 @@ public class UserService {
 
     /**
      * Obtiene el usuario autenticado desde SecurityContext
+     * Soporta búsqueda por email o username (en caso de que getName() devuelva username del JWT)
      */
     private User getAuthenticatedUser() {
         SecurityContext securityContext = SecurityContextHolder.getContext();
@@ -95,9 +96,27 @@ public class UserService {
             return getDefaultUser();
         }
 
-        String email = authentication.getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + email));
+        // Intenta extraer email directamente si es CustomUserDetails
+        if (authentication.getPrincipal() instanceof com.example.authbackend.security.user.CustomUserDetails customUserDetails) {
+            String email = customUserDetails.getEmail();
+            LOGGER.debug("[AUTH] Extrayendo email directamente de CustomUserDetails: {}", email);
+            return userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado por email: " + email));
+        }
+
+        // Fallback: authentication.getName() devuelve username o email del JWT
+        String principal = authentication.getName();
+        LOGGER.debug("[AUTH] Obtenido principal del authentication: {}", principal);
+
+        // Intenta buscar por email primero (si contiene @)
+        if (principal.contains("@")) {
+            return userRepository.findByEmail(principal)
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + principal));
+        }
+
+        // Si no contiene @, busca por username (insensible a mayúsculas)
+        return userRepository.findByUsername(principal)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + principal));
     }
 
     /**
