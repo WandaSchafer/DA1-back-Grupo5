@@ -33,8 +33,8 @@ public class ActivityService {
     }
 
     public ActivityDetailResponse getActivityById(Long id) {
-        Activity a = activityRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("No encontrada"));
+    Activity a = activityRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("No encontrada"));
 
         return new ActivityDetailResponse(
                 a.getId(),
@@ -45,7 +45,10 @@ public class ActivityService {
                 a.getDuration(),
                 a.getPrice(),
                 a.getAvailableSlots(),
-                a.getImageUrl()
+                a.getImageUrl(),
+                a.getMeetingPointAddress(),
+                a.getMeetingPointLat(),
+                a.getMeetingPointLng()
         );
     }
 

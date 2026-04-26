@@ -11,10 +11,15 @@ public class ActivityDetailResponse {
     private double price;
     private int availableSlots;
     private String imageUrl;
+    private String meetingPointAddress;
+    private Double meetingPointLat;
+    private Double meetingPointLng;
+
 
     public ActivityDetailResponse(Long id, String name, String description,
-                                  String destination, String category, String duration,
-                                  double price, int availableSlots, String imageUrl) {
+                              String destination, String category, String duration,
+                              double price, int availableSlots, String imageUrl,
+                              String meetingPointAddress, Double meetingPointLat, Double meetingPointLng) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -24,7 +29,10 @@ public class ActivityDetailResponse {
         this.price = price;
         this.availableSlots = availableSlots;
         this.imageUrl = imageUrl;
-    }
+        this.meetingPointAddress = meetingPointAddress;
+        this.meetingPointLat = meetingPointLat;
+        this.meetingPointLng = meetingPointLng;
+}
 
     public Long getId() {
         return id;
@@ -61,4 +69,17 @@ public class ActivityDetailResponse {
     public String getImageUrl() {
         return imageUrl;
     }
+    public String getMeetingPointAddress() {
+        return meetingPointAddress;
+    }
+
+    public Double getMeetingPointLat() {
+        return meetingPointLat;
+    }
+
+    public Double getMeetingPointLng() {
+        return meetingPointLng;
+    }
+
+
 }

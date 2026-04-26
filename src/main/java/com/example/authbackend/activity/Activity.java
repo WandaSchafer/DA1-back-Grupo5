@@ -29,6 +29,15 @@ public class Activity {
     @Column(name = "guide_name")
     private String guideName;
 
+    @Column(name = "meeting_point_address")
+    private String meetingPointAddress;
+
+    @Column(name = "meeting_point_lat")
+    private Double meetingPointLat;
+
+    @Column(name = "meeting_point_lng")
+    private Double meetingPointLng;
+
     public Activity() {}
 
     public Long getId() {
@@ -110,4 +119,30 @@ public class Activity {
 public void setGuideName(String guideName) {
     this.guideName = guideName;
 }
+
+
+public String getMeetingPointAddress() {
+    return meetingPointAddress;
+}
+
+public void setMeetingPointAddress(String meetingPointAddress) {
+    this.meetingPointAddress = meetingPointAddress;
+}
+
+public Double getMeetingPointLat() {
+    return meetingPointLat;
+}
+
+public void setMeetingPointLat(Double meetingPointLat) {
+    this.meetingPointLat = meetingPointLat;
+}
+
+public Double getMeetingPointLng() {
+    return meetingPointLng;
+}
+
+public void setMeetingPointLng(Double meetingPointLng) {
+    this.meetingPointLng = meetingPointLng;
+}
+
 }
