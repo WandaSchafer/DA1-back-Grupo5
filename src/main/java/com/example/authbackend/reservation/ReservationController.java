@@ -1,6 +1,9 @@
 package com.example.authbackend.reservation;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import com.example.authbackend.reservation.ReservationService.RescheduleReservationRequest;
 
 import java.util.List;
 
@@ -28,5 +31,12 @@ public class ReservationController {
     @GetMapping("/me")
     public List<ReservationResponse> myReservations() {
         return service.getMyReservations();
+    }
+
+    @PutMapping("/{id}/reschedule")
+    public ResponseEntity<ReservationResponse> reschedule(
+            @PathVariable Long id, 
+            @RequestBody RescheduleReservationRequest request) {
+        return ResponseEntity.ok(service.rescheduleReservation(id, request));
     }
 }

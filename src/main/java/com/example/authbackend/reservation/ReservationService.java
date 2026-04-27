@@ -12,6 +12,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -31,6 +33,12 @@ public class ReservationService {
         this.availabilityRepository = availabilityRepository;
         this.userRepository = userRepository;
     }
+
+    public record RescheduleReservationRequest(
+        String newDate,
+        String newTime,
+        int participants
+        ) {}
 
     /**
      * Obtiene el usuario autenticado desde SecurityContext
@@ -181,6 +189,7 @@ public class ReservationService {
     private ReservationResponse map(Reservation r) {
         return new ReservationResponse(
                 r.getId(),
+                r.getActivity().getId(),
                 r.getActivity().getName(),
                 r.getActivity().getDestination(),
                 r.getActivity().getImageUrl(),
@@ -193,4 +202,43 @@ public class ReservationService {
                 r.getTotalPrice()
         );
     }
+
+    @Transactional
+    public ReservationResponse rescheduleReservation(Long id, RescheduleReservationRequest request) {
+        Reservation r = reservationRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Reserva no encontrada"));
+
+        User user = getAuthenticatedUser();
+        if (!r.getUser().getId().equals(user.getId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso");
+        }
+
+        if (r.getStatus() != ReservationStatus.CONFIRMED) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Solo se pueden reprogramar reservas confirmadas");
+        }
+
+        ActivityAvailability oldAvailability = r.getAvailability();
+        oldAvailability.setReservedSlots(oldAvailability.getReservedSlots() - r.getParticipants());
+        availabilityRepository.save(oldAvailability);
+
+        LocalDate date = LocalDate.parse(request.newDate());
+        LocalTime time = LocalTime.parse(request.newTime());
+        
+        ActivityAvailability newAvailability = availabilityRepository
+                .findByActivityIdAndDateAndTime(r.getActivity().getId(), date, time)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "El nuevo horario no existe"));
+
+        if (newAvailability.getAvailableSlots() < request.participants()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No hay cupos disponibles en la nueva fecha");
+        }
+
+        newAvailability.setReservedSlots(newAvailability.getReservedSlots() + request.participants());
+        availabilityRepository.save(newAvailability);
+
+        r.setAvailability(newAvailability);
+        r.setParticipants(request.participants());
+        
+        Reservation saved = reservationRepository.save(r);
+        return map(saved);
+        }
 }

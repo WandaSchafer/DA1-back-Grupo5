@@ -1,28 +1,64 @@
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\auth\AuthController.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\auth\AuthService.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\auth\AuthTokenService.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\auth\dto\AuthResponse.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\auth\dto\LoginRequest.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\auth\dto\MessageResponse.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\auth\dto\OtpRequest.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\auth\dto\OtpVerifyRequest.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\auth\dto\RegisterRequest.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\AuthBackendApplication.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\exception\BadRequestException.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\exception\ErrorResponse.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\exception\GlobalExceptionHandler.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\exception\InvalidCredentialsException.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\exception\OtpValidationException.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\exception\ResourceConflictException.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\exception\ResourceNotFoundException.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\otp\OtpEntry.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\otp\OtpService.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\otp\OtpStore.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\security\JwtAuthenticationFilter.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\security\JwtService.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\security\SecurityConfig.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\security\user\CustomUserDetails.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\security\user\CustomUserDetailsService.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\user\Role.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\user\User.java
-C:\Users\Altea\Desktop\back dap1\src\main\java\com\example\authbackend\user\UserRepository.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\activity\Activity.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\activity\ActivityAvailability.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\activity\ActivityAvailabilityRepository.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\activity\ActivityAvailabilityService.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\activity\ActivityController.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\activity\ActivityDetailResponse.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\activity\ActivityListItemResponse.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\activity\ActivityRepository.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\activity\ActivityService.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\activity\AvailabilitySlotResponse.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\auth\AuthController.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\auth\AuthService.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\auth\AuthTokenService.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\auth\dto\AuthResponse.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\auth\dto\LoginRequest.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\auth\dto\MessageResponse.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\auth\dto\OtpRequest.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\auth\dto\OtpVerifyRequest.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\auth\dto\RegisterRequest.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\AuthBackendApplication.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\exception\BadRequestException.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\exception\ErrorResponse.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\exception\GlobalExceptionHandler.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\exception\InvalidCredentialsException.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\exception\OtpValidationException.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\exception\ResourceConflictException.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\exception\ResourceNotFoundException.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\history\ActivityHistoryController.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\history\ActivityHistoryItemResponse.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\history\ActivityHistoryService.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\otp\OtpEntry.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\otp\OtpEntryRepository.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\otp\OtpService.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\otp\OtpStore.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\rating\CreateRatingRequest.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\rating\Rating.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\rating\RatingController.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\rating\RatingRepository.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\rating\RatingResponse.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\rating\RatingService.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\rating\RatingStatsResponse.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\reservation\CreateReservationRequest.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\reservation\Reservation.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\reservation\ReservationController.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\reservation\ReservationRepository.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\reservation\ReservationResponse.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\reservation\ReservationService.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\reservation\ReservationStatus.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\security\JwtAuthenticationFilter.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\security\JwtService.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\security\SecurityConfig.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\security\user\CustomUserDetails.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\security\user\CustomUserDetailsService.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\user\dto\UpdateUserProfileRequest.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\user\dto\UserPreferenceRequest.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\user\dto\UserPreferenceResponse.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\user\dto\UserProfileResponse.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\user\Role.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\user\User.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\user\UserController.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\user\UserPreference.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\user\UserPreferenceRepository.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\user\UserRepository.java
+C:\Users\Altea\Documents\GitHub\DA1-back-Grupo5(1)\src\main\java\com\example\authbackend\user\UserService.java
