@@ -57,6 +57,10 @@ CREATE TABLE IF NOT EXISTS activities (
     price DECIMAL(10, 2) NOT NULL,
     available_slots INT NOT NULL DEFAULT 0,
     image_url VARCHAR(255),
+    last_price_change TIMESTAMP,
+    last_availability_change TIMESTAMP,
+    price_before_change DECIMAL(10, 2),
+    availability_before_change INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_category (category),
@@ -137,6 +141,32 @@ CREATE TABLE IF NOT EXISTS ratings (
     INDEX idx_activity (activity_id),
     INDEX idx_user (user_id),
     INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- TABLA: favorites
+-- Descripción: Actividades marcadas como favoritas por usuarios
+-- Permite a los usuarios guardar actividades sin hacer reserva
+-- Incluye precio y disponibilidad al momento de marcar para detectar cambios
+-- =====================================================
+CREATE TABLE IF NOT EXISTS favorites (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    activity_id BIGINT NOT NULL,
+    price_when_marked DECIMAL(10, 2) NOT NULL,
+    available_slots_when_marked INT NOT NULL,
+    has_price_changed BOOLEAN DEFAULT FALSE,
+    has_availability_changed BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (activity_id) REFERENCES activities(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_activity_favorite (user_id, activity_id),
+    INDEX idx_user (user_id),
+    INDEX idx_activity (activity_id),
+    INDEX idx_created_at (created_at),
+    INDEX idx_has_price_changed (has_price_changed),
+    INDEX idx_has_availability_changed (has_availability_changed)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================

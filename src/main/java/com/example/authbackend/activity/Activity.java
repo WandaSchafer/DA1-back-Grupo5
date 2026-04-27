@@ -2,6 +2,7 @@ package com.example.authbackend.activity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "activities")
@@ -28,6 +29,18 @@ public class Activity {
 
     @Column(name = "guide_name")
     private String guideName;
+
+    @Column(name = "last_price_change")
+    private LocalDateTime lastPriceChange;
+
+    @Column(name = "last_availability_change")
+    private LocalDateTime lastAvailabilityChange;
+
+    @Column(name = "price_before_change")
+    private Double priceBeforeChange;
+
+    @Column(name = "availability_before_change")
+    private Integer availabilityBeforeChange;
 
     public Activity() {}
 
@@ -109,5 +122,37 @@ public class Activity {
 
 public void setGuideName(String guideName) {
     this.guideName = guideName;
+}
+
+public LocalDateTime getLastPriceChange() {
+    return lastPriceChange;
+}
+
+public void setLastPriceChange(LocalDateTime lastPriceChange) {
+    this.lastPriceChange = lastPriceChange;
+}
+
+public LocalDateTime getLastAvailabilityChange() {
+    return lastAvailabilityChange;
+}
+
+public void setLastAvailabilityChange(LocalDateTime lastAvailabilityChange) {
+    this.lastAvailabilityChange = lastAvailabilityChange;
+}
+
+public Double getPriceBeforeChange() {
+    return priceBeforeChange;
+}
+
+public void setPriceBeforeChange(Double priceBeforeChange) {
+    this.priceBeforeChange = priceBeforeChange;
+}
+
+public Integer getAvailabilityBeforeChange() {
+    return availabilityBeforeChange;
+}
+
+public void setAvailabilityBeforeChange(Integer availabilityBeforeChange) {
+    this.availabilityBeforeChange = availabilityBeforeChange;
 }
 }
