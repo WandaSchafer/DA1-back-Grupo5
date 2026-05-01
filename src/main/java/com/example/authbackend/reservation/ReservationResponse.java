@@ -26,11 +26,17 @@ public class ReservationResponse {
     private LocalDateTime createdAt;
     private double totalPrice;
 
+    private Integer activityScore;
+    private Integer guideScore;
+    private String ratingComment;
+    
+
     public ReservationResponse(Long id, String activityName, String destination, String imageUrl,
-                               LocalDate date, LocalTime time,
-                               int participants, ReservationStatus status,
-                               String cancellationPolicy, LocalDateTime createdAt,
-                               double totalPrice, Long activityId) {
+                                LocalDate date, LocalTime time,
+                                int participants, ReservationStatus status,
+                                String cancellationPolicy, LocalDateTime createdAt,
+                                double totalPrice, Long activityId,
+                                Integer activityScore, Integer guideScore, String ratingComment) {
         this.id = id;
         this.activityName = activityName;
         this.destination = destination;
@@ -43,7 +49,10 @@ public class ReservationResponse {
         this.createdAt = createdAt;
         this.totalPrice = totalPrice;
         this.activityId = activityId;
-    }
+        this.activityScore = activityScore;
+        this.guideScore = guideScore;
+        this.ratingComment = ratingComment;
+}
 
     public Long getId() {
         return id;
@@ -97,5 +106,17 @@ public class ReservationResponse {
     public void setActivityId(Long activityId)
     {
         this.activityId = activityId;
+    }
+
+    public Integer getActivityScore() {
+        return activityScore;
+    }
+
+    public Integer getGuideScore() {
+        return guideScore;
+    }
+
+    public String getRatingComment() {
+        return ratingComment;
     }
 }
