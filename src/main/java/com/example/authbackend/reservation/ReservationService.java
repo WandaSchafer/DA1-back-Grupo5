@@ -190,7 +190,8 @@ public class ReservationService {
                 r.getStatus(),
                 "Cancelación hasta 24h antes",
                 r.getCreatedAt(),
-                r.getTotalPrice()
+                r.getTotalPrice(),
+                r.getActivity().getId()
         );
     }
 }

@@ -7,6 +7,7 @@ import java.time.LocalTime;
 public class ReservationResponse {
 
     private Long id;
+    private Long activityId;
     private String activityName;
     private String destination;
     private String imageUrl;
@@ -24,7 +25,7 @@ public class ReservationResponse {
                                LocalDate date, LocalTime time,
                                int participants, ReservationStatus status,
                                String cancellationPolicy, LocalDateTime createdAt,
-                               double totalPrice) {
+                               double totalPrice, Long activityId) {
         this.id = id;
         this.activityName = activityName;
         this.destination = destination;
@@ -36,6 +37,7 @@ public class ReservationResponse {
         this.cancellationPolicy = cancellationPolicy;
         this.createdAt = createdAt;
         this.totalPrice = totalPrice;
+        this.activityId = activityId;
     }
 
     public Long getId() {
@@ -80,5 +82,15 @@ public class ReservationResponse {
 
     public double getTotalPrice() {
         return totalPrice;
+    }
+
+    public Long getActivityId() 
+    {
+        return activityId;
+    }
+
+    public void setActivityId(Long activityId)
+    {
+        this.activityId = activityId;
     }
 }
