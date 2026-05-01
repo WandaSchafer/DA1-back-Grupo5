@@ -1,5 +1,7 @@
 package com.example.authbackend.reservation;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -7,7 +9,10 @@ import java.time.LocalTime;
 public class ReservationResponse {
 
     private Long id;
+
+    @JsonProperty("activityId")
     private Long activityId;
+    
     private String activityName;
     private String destination;
     private String imageUrl;
