@@ -29,4 +29,9 @@ public class ReservationController {
     public List<ReservationResponse> myReservations() {
         return service.getMyReservations();
     }
+
+    @PutMapping("/{id}/reschedule")
+    public ReservationResponse reschedule(@PathVariable Long id, @RequestBody RescheduleRequest request) {
+        return service.rescheduleReservation(id, request);
+    }
 }

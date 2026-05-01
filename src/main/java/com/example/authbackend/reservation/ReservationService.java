@@ -178,6 +178,75 @@ public class ReservationService {
                 .toList();
     }
 
+    @Transactional
+    public ReservationResponse rescheduleReservation(Long id, RescheduleRequest request) {
+        Reservation r = reservationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Reserva no encontrada"));
+
+        // Verificar que el usuario autenticado sea dueño de la reserva
+        User user = getAuthenticatedUser();
+        if (!r.getUser().getId().equals(user.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "No tienes permiso para reprogramar esta reserva"
+            );
+        }
+
+        if (r.getStatus() == ReservationStatus.CANCELLED) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "No se puede reprogramar una reserva cancelada"
+            );
+        }
+
+        if (r.getStatus() == ReservationStatus.FINISHED) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "No se puede reprogramar una reserva finalizada"
+            );
+        }
+
+        // Buscar la nueva disponibilidad
+        ActivityAvailability newAvailability = availabilityRepository
+                .findByActivityIdAndDateAndTime(
+                        r.getActivity().getId(),
+                        request.getDate(),
+                        request.getTime()
+                )
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "El nuevo horario no está disponible"
+                ));
+
+        // Verificar cupos disponibles usando los participantes del request
+        if (newAvailability.getAvailableSlots() < request.getParticipants()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "No hay suficientes cupos disponibles para el nuevo horario"
+            );
+        }
+
+        // Liberar cupos de la disponibilidad actual
+        ActivityAvailability oldAvailability = r.getAvailability();
+        oldAvailability.setReservedSlots(
+                Math.max(oldAvailability.getReservedSlots() - r.getParticipants(), 0)
+        );
+        availabilityRepository.save(oldAvailability);
+
+        // Reservar cupos en la nueva disponibilidad usando los del request
+        newAvailability.setReservedSlots(
+                newAvailability.getReservedSlots() + request.getParticipants()
+        );
+        availabilityRepository.save(newAvailability);
+
+        // Actualizar la reserva con los nuevos datos
+        r.setAvailability(newAvailability);
+        r.setParticipants(request.getParticipants());
+        Reservation saved = reservationRepository.save(r);
+
+        return map(saved);
+    }
+
     private ReservationResponse map(Reservation r) {
         return new ReservationResponse(
                 r.getId(),
