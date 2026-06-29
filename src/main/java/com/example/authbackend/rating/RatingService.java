@@ -57,8 +57,8 @@ public class RatingService {
         // Validar que la actividad ya haya ocurrido (fecha pasada)
         Reservation latestReservation = completedReservations.get(0);
         LocalDateTime activityDateTime = LocalDateTime.of(
-            latestReservation.getAvailability().getDate(),
-            latestReservation.getAvailability().getTime()
+            latestReservation.getActivityAvailability().getDate(),
+            latestReservation.getActivityAvailability().getTime()
         );
         LocalDateTime now = LocalDateTime.now();
 

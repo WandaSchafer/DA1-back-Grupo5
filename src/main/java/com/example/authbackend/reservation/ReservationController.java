@@ -1,5 +1,9 @@
 package com.example.authbackend.reservation;
 
+import com.example.authbackend.security.user.CustomUserDetails;
+import com.example.authbackend.user.User;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,22 +20,20 @@ public class ReservationController {
     }
 
     @PostMapping
-    public ReservationResponse create(@RequestBody CreateReservationRequest request) {
-        return service.createReservation(request);
+    public ReservationResponse create(@RequestBody CreateReservationRequest request,
+                                      @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return service.createReservation(request, userDetails.getUser());
     }
 
     @PatchMapping("/{id}/cancel")
-    public ReservationResponse cancel(@PathVariable Long id) {
-        return service.cancelReservation(id);
+    public ResponseEntity<Void> cancel(@PathVariable Long id,
+                                       @AuthenticationPrincipal CustomUserDetails userDetails) {
+        service.cancelReservation(id, userDetails.getUser());
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/me")
-    public List<ReservationResponse> myReservations() {
-        return service.getMyReservations();
-    }
-
-    @PutMapping("/{id}/reschedule")
-    public ReservationResponse reschedule(@PathVariable Long id, @RequestBody RescheduleRequest request) {
-        return service.rescheduleReservation(id, request);
+    public List<ReservationResponse> myReservations(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        return service.getReservationsForUser(userDetails.getUser());
     }
 }
