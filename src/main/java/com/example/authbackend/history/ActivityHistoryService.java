@@ -4,8 +4,8 @@ import com.example.authbackend.reservation.Reservation;
 import com.example.authbackend.reservation.ReservationRepository;
 import com.example.authbackend.reservation.ReservationStatus;
 import com.example.authbackend.user.User;
-import com.example.authbackend.user.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -15,28 +15,17 @@ import java.util.List;
 public class ActivityHistoryService {
 
     private final ReservationRepository reservationRepository;
-    private final UserRepository userRepository;
 
-    public ActivityHistoryService(ReservationRepository reservationRepository,
-                                  UserRepository userRepository) {
+    public ActivityHistoryService(ReservationRepository reservationRepository) {
         this.reservationRepository = reservationRepository;
-        this.userRepository = userRepository;
     }
 
-    private User getDefaultUser() {
-        return userRepository.findAll()
-                .stream()
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("No hay usuarios cargados"));
-    }
-
-    public List<ActivityHistoryItemResponse> getHistory(LocalDate fromDate,
+    public List<ActivityHistoryItemResponse> getHistory(User user,
+                                                        LocalDate fromDate,
                                                         LocalDate toDate,
                                                         String destination) {
 
         updateFinishedReservations();
-
-        User user = getDefaultUser();
 
         String normalizedDestination = (destination == null || destination.isBlank())
                 ? null
@@ -52,25 +41,27 @@ public class ActivityHistoryService {
     private ActivityHistoryItemResponse mapToHistoryItem(Reservation r) {
         return new ActivityHistoryItemResponse(
                 r.getId(),
-                r.getActivity().getId(),
-                r.getAvailability().getDate(),
-                r.getActivity().getName(),
-                r.getActivity().getDestination(),
-                r.getActivity().getGuideName(),
-                r.getActivity().getDuration()
+                r.getActivityAvailability().getActivity().getId(),
+                r.getActivityAvailability().getDate(),
+                r.getActivityAvailability().getActivity().getName(),
+                r.getActivityAvailability().getActivity().getDestination(),
+                r.getActivityAvailability().getActivity().getGuideName(),
+                r.getActivityAvailability().getActivity().getDuration()
         );
     }
 
+    @Transactional
     private void updateFinishedReservations() {
         List<Reservation> reservations = reservationRepository.findAll();
 
         for (Reservation r : reservations) {
-            if (r.getStatus() == ReservationStatus.CONFIRMED) {
+            if (r.getStatus() == ReservationStatus.CONFIRMED
+                    && r.getActivityAvailability() != null
+                    && r.getActivityAvailability().getDate() != null
+                    && r.getActivityAvailability().getTime() != null) {
                 LocalDateTime activityDateTime = LocalDateTime.of(
-                        r.getAvailability().getDate(),
-                        r.getAvailability().getTime()
-                );
-
+                        r.getActivityAvailability().getDate(),
+                        r.getActivityAvailability().getTime());
                 if (activityDateTime.isBefore(LocalDateTime.now())) {
                     r.setStatus(ReservationStatus.FINISHED);
                 }

@@ -1,6 +1,9 @@
 package com.example.authbackend.history;
 
+import com.example.authbackend.security.user.CustomUserDetails;
+import com.example.authbackend.user.User;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -28,8 +31,12 @@ public class ActivityHistoryController {
             LocalDate toDate,
 
             @RequestParam(required = false)
-            String destination
+            String destination,
+
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        return activityHistoryService.getHistory(fromDate, toDate, destination);
+        User currentUser = userDetails.getUser();
+
+        return activityHistoryService.getHistory(currentUser, fromDate, toDate, destination);
     }
 }
