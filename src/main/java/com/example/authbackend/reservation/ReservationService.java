@@ -1,117 +1,258 @@
 package com.example.authbackend.reservation;
 
-import com.example.authbackend.activity.Activity;
-import com.example.authbackend.activity.ActivityAvailability;
-import com.example.authbackend.activity.ActivityAvailabilityRepository;
-import com.example.authbackend.exception.BadRequestException;
-import com.example.authbackend.exception.ForbiddenException;
-import com.example.authbackend.exception.ResourceNotFoundException;
-import com.example.authbackend.rating.RatingRepository;
-import com.example.authbackend.transaction.Transaction;
-import com.example.authbackend.transaction.TransactionStatus;
+import com.example.authbackend.activity.*;
+import com.example.authbackend.rating.Rating;
 import com.example.authbackend.user.User;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.example.authbackend.user.UserRepository;
+import jakarta.transaction.Transactional;
 
-import java.time.LocalDateTime;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+import com.example.authbackend.rating.RatingRepository;
+
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class ReservationService {
 
-    private final ReservationRepository reservationRepository;
-    private final ActivityAvailabilityRepository activityAvailabilityRepository;
-    private final RatingRepository ratingRepository;
+        private final ReservationRepository reservationRepository;
+        private final ActivityRepository activityRepository;
+        private final ActivityAvailabilityRepository availabilityRepository;
+        private final UserRepository userRepository;
+        private final RatingRepository ratingRepository;
 
-    public ReservationService(ReservationRepository reservationRepository,
-                              ActivityAvailabilityRepository activityAvailabilityRepository,
-                              RatingRepository ratingRepository) {
-        this.reservationRepository = reservationRepository;
-        this.activityAvailabilityRepository = activityAvailabilityRepository;
-        this.ratingRepository = ratingRepository;
+        public ReservationService(ReservationRepository reservationRepository,
+                              ActivityRepository activityRepository,
+                              ActivityAvailabilityRepository availabilityRepository,
+                              UserRepository userRepository, RatingRepository ratingRepository) {
+                this.reservationRepository = reservationRepository;
+                this.activityRepository = activityRepository;
+                this.availabilityRepository = availabilityRepository;
+                this.userRepository = userRepository;
+                this.ratingRepository = ratingRepository;
+        }
+
+        private User getAuthenticatedUser() {
+                SecurityContext securityContext = SecurityContextHolder.getContext();
+                Authentication authentication = securityContext.getAuthentication();
+
+                if (authentication == null || !authentication.isAuthenticated()) {
+                // Fallback a getDefaultUser() para compatibilidad
+                        return getDefaultUser();
+                }
+
+                // Intenta extraer email directamente si es CustomUserDetails
+                if (authentication.getPrincipal() instanceof com.example.authbackend.security.user.CustomUserDetails customUserDetails) {
+                        String email = customUserDetails.getEmail();
+                        return userRepository.findByEmail(email)
+                                .orElse(getDefaultUser());
+                }
+
+                // Fallback: authentication.getName() devuelve username o email del JWT
+                String principal = authentication.getName();
+
+                // Intenta buscar por email primero (si contiene @)
+                if (principal.contains("@")) {
+                        return userRepository.findByEmail(principal)
+                                .orElse(getDefaultUser());
+                }
+
+                // Si no contiene @, busca por username (insensible a mayúsculas)
+                return userRepository.findByUsername(principal)
+                        .orElse(getDefaultUser());
     }
 
+    /**
+     * Obtiene el primer usuario registrado (fallback)
+     */
+        private User getDefaultUser() {
+                return userRepository.findAll()
+                        .stream()
+                        .findFirst()
+                        .orElseThrow(() -> new RuntimeException("No hay usuarios cargados"));
+        }
+
     @Transactional
-    public ReservationResponse createReservation(CreateReservationRequest request, User user) {
-        if (request.getParticipants() == null || request.getParticipants() <= 0) {
-            throw new BadRequestException("Participants count must be at least 1");
+    public ReservationResponse createReservation(CreateReservationRequest request) {
+
+        User user = getAuthenticatedUser();
+
+        Activity activity = activityRepository.findById(request.getActivityId())
+                .orElseThrow(() -> new RuntimeException("Actividad no encontrada"));
+
+        ActivityAvailability availability = availabilityRepository
+                .findByActivityIdAndDateAndTime(
+                        request.getActivityId(),
+                        request.getDate(),
+                        request.getTime()
+                )
+                .orElseThrow(() -> new RuntimeException("Horario no disponible"));
+        
+        if (reservationRepository.existsByUserIdAndActivityIdAndAvailability_DateAndAvailability_TimeAndStatus(
+                user.getId(),
+                request.getActivityId(),
+                request.getDate(),
+                request.getTime(),
+                ReservationStatus.CONFIRMED
+        )) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Ya tenés una reserva activa para esta actividad en ese horario"
+            );
         }
 
-        if (request.getDate() == null || request.getTime() == null) {
-            throw new BadRequestException("Date and time are required to reserve an activity");
+        if (availability.getAvailableSlots() < request.getParticipants()) {
+                throw new RuntimeException("No hay cupos");
         }
 
-        ActivityAvailability availability = activityAvailabilityRepository
-                .findByActivityIdAndDateAndTime(request.getActivityId(), request.getDate(), request.getTime())
-                .orElseThrow(() -> new ResourceNotFoundException("Activity availability not found for the requested date/time"));
-
-        if (availability.getAvailableSlots() <= 0 || availability.getAvailableSlots() < request.getParticipants()) {
-            throw new BadRequestException("No available slots for this activity");
-        }
-
-        availability.setReservedSlots(availability.getReservedSlots() + request.getParticipants());
-        activityAvailabilityRepository.save(availability);
-
-        Activity activity = availability.getActivity();
-
-        Reservation reservation = new Reservation();
-        reservation.setUser(user);
-        reservation.setActivityAvailability(availability);
-        reservation.setParticipants(request.getParticipants());
-        reservation.setReservationDate(LocalDateTime.now());
-        reservation.setStatus(ReservationStatus.CONFIRMED);
-        reservation.setTotalPrice(java.math.BigDecimal.valueOf(activity.getPrice())
-                .multiply(java.math.BigDecimal.valueOf(request.getParticipants())));
-
-        Transaction transaction = new Transaction(
-                reservation.getTotalPrice().doubleValue(),
-                LocalDateTime.now(),
-                activity.getPrice() == 0.0 ? "FREE" : "XXXX-XXXX-XXXX-1234",
-                TransactionStatus.APPROVED,
-                user
+        availability.setReservedSlots(
+                availability.getReservedSlots() + request.getParticipants()
         );
-        reservation.setTransaction(transaction);
+        availabilityRepository.save(availability);
 
-        Reservation savedReservation = reservationRepository.save(reservation);
+        Reservation r = new Reservation();
+        r.setUser(user);
+        r.setActivity(activity);
+        r.setAvailability(availability);
+        r.setParticipants(request.getParticipants());
+        r.setStatus(ReservationStatus.CONFIRMED);
 
-        return new ReservationResponse(savedReservation);
+        Reservation saved = reservationRepository.save(r);
+
+        return map(saved);
     }
-    
+
     @Transactional
-    public void cancelReservation(Long reservationId, User user) {
-        Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new ResourceNotFoundException("Reservation not found"));
+    public ReservationResponse cancelReservation(Long id) {
 
-        if (!reservation.getUser().getId().equals(user.getId())) {
-            throw new ForbiddenException("Cannot cancel another user's reservation");
+        Reservation r = reservationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Reserva no encontrada"));
+
+        // Verificar que el usuario autenticado sea dueño de la reserva
+        User user = getAuthenticatedUser();
+        if (!r.getUser().getId().equals(user.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "No tienes permiso para cancelar esta reserva"
+            );
         }
 
-        if (reservation.getStatus() == ReservationStatus.CANCELLED) {
-            return;
+        if (r.getStatus() == ReservationStatus.CANCELLED) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La reserva ya fue cancelada"
+            );
         }
 
-        ActivityAvailability availability = reservation.getActivityAvailability();
-        if (availability != null) {
-            int reservedSlots = Optional.ofNullable(availability.getReservedSlots()).orElse(0);
-            availability.setReservedSlots(Math.max(0, reservedSlots - Optional.ofNullable(reservation.getParticipants()).orElse(0)));
-            activityAvailabilityRepository.save(availability);
+        if (r.getStatus() == ReservationStatus.FINISHED) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "No se puede cancelar una reserva finalizada"
+            );
         }
 
-        reservation.setStatus(ReservationStatus.CANCELLED);
-        reservationRepository.save(reservation);
-    }
+        ActivityAvailability availability = r.getAvailability();
 
-    public List<ReservationResponse> getReservationsForUser(User user) {
-        List<Reservation> reservations = reservationRepository.findByUser(user);
-        return reservations.stream()
-                .map(reservation -> {
-                    ReservationResponse response = new ReservationResponse(reservation);
-                    ratingRepository.findByUserIdAndActivityId(user.getId(), response.getActivityId())
-                            .ifPresent(response::addRatingDetails);
-                    return response;
-                })
-                .collect(Collectors.toList());
-    }
+        int newReservedSlots = availability.getReservedSlots() - r.getParticipants();
+        availability.setReservedSlots(Math.max(newReservedSlots, 0));
+        availabilityRepository.save(availability);
+
+        r.setStatus(ReservationStatus.CANCELLED);
+
+        Reservation saved = reservationRepository.save(r);
+
+        return map(saved);
+}
+
+        public List<ReservationResponse> getMyReservations() {
+
+                User user = getAuthenticatedUser();
+
+                return reservationRepository.findByUserIdOrderByCreatedAtDesc(user.getId())
+                        .stream()
+                        .map(this::map)
+                        .toList();
+        }
+
+    @Transactional
+        public ReservationResponse rescheduleReservation(Long id, RescheduleRequest request) {
+                Reservation r = reservationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Reserva no encontrada"));
+
+                User user = getAuthenticatedUser();
+
+                if (!r.getUser().getId().equals(user.getId())) {
+                        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso para reprogramar esta reserva");
+                }
+
+                if (r.getStatus() == ReservationStatus.CANCELLED || r.getStatus() == ReservationStatus.FINISHED) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se puede reprogramar esta reserva");
+                }
+
+                ActivityAvailability newAvailability = availabilityRepository
+                        .findByActivityIdAndDateAndTime(
+                                r.getActivity().getId(),
+                                request.getDate(),
+                                request.getTime()
+                        )
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "El nuevo horario no está disponible"));
+
+                if (newAvailability.getAvailableSlots() < request.getParticipants()) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No hay suficientes cupos disponibles");
+                }
+
+                ActivityAvailability oldAvailability = r.getAvailability();
+                oldAvailability.setReservedSlots(Math.max(oldAvailability.getReservedSlots() - r.getParticipants(), 0));
+                availabilityRepository.save(oldAvailability);
+
+                newAvailability.setReservedSlots(newAvailability.getReservedSlots() + request.getParticipants());
+                availabilityRepository.save(newAvailability);
+
+                r.setAvailability(newAvailability);
+                r.setParticipants(request.getParticipants());
+
+                Reservation saved = reservationRepository.save(r);
+
+                return map(saved);
+        }
+
+        private ReservationResponse map(Reservation r) {
+                User user = r.getUser();
+
+                Rating rating = ratingRepository
+                        .findByUserIdAndActivityId(user.getId(), r.getActivity().getId())
+                        .orElse(null);
+
+                Integer activityScore = null;
+                Integer guideScore = null;
+                String ratingComment = null;
+
+        if (rating != null) {
+                activityScore = rating.getActivityScore();
+                guideScore = rating.getGuideScore();
+                ratingComment = rating.getComment();
+        }
+
+        return new ReservationResponse(
+                r.getId(),
+                r.getActivity().getName(),
+                r.getActivity().getDestination(),
+                r.getActivity().getImageUrl(),
+                r.getAvailability().getDate(),
+                r.getAvailability().getTime(),
+                r.getParticipants(),
+                r.getStatus(),
+                "Cancelación disponible hasta 24 hs antes",
+                r.getCreatedAt(),
+                r.getTotalPrice(),
+                r.getActivity().getId(),
+                activityScore,
+                guideScore,
+                ratingComment
+                );
+        }
 }
