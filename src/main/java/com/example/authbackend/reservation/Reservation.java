@@ -4,11 +4,12 @@ import com.example.authbackend.activity.Activity;
 import com.example.authbackend.activity.ActivityAvailability;
 import com.example.authbackend.user.User;
 import jakarta.persistence.*;
-
+import lombok.Data;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "reservations")
+@Data
 public class Reservation {
 
     @Id
@@ -33,6 +34,8 @@ public class Reservation {
     private ReservationStatus status;
 
     private LocalDateTime createdAt;
+    
+    private LocalDateTime updatedAt;
 
     @PrePersist
     public void prePersist() {
@@ -42,55 +45,12 @@ public class Reservation {
         }
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public Activity getActivity() {
-        return activity;
-    }
-
-    public void setActivity(Activity activity) {
-        this.activity = activity;
-    }
-
-    public ActivityAvailability getAvailability() {
-        return availability;
-    }
-
-    public void setAvailability(ActivityAvailability availability) {
-        this.availability = availability;
-    }
-
-    public int getParticipants() {
-        return participants;
-    }
-
-    public void setParticipants(int participants) {
-        this.participants = participants;
-    }
-
-    public ReservationStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(ReservationStatus status) {
-        this.status = status;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 
     public double getTotalPrice() {
-        return (activity.getPrice() * participants);
+        return (activity != null) ? (activity.getPrice() * participants) : 0;
     }
 }

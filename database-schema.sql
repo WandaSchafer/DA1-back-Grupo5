@@ -144,13 +144,13 @@ CREATE TABLE IF NOT EXISTS ratings (
 -- =====================================================
 
 -- Index para búsquedas rápidas de usuarios por email
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX idx_users_email ON users(email);
 
 -- Index para búsquedas de reservas por usuario y estado
-CREATE INDEX IF NOT EXISTS idx_reservations_user_status ON reservations(user_id, status);
+CREATE INDEX idx_reservations_user_status ON reservations(user_id, status);
 
 -- Index para búsquedas de actividades por destino y categoría
-CREATE INDEX IF NOT EXISTS idx_activities_destination_category ON activities(destination, category);
+CREATE INDEX idx_activities_destination_category ON activities(destination, category);
 
 -- =====================================================
 -- DATOS DE PRUEBA (opcional)
