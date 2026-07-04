@@ -73,7 +73,7 @@ public class ReservationService {
                 return userRepository.findAll()
                         .stream()
                         .findFirst()
-                        .orElseThrow(() -> new RuntimeException("No hay usuarios cargados"));
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No hay usuarios registrados en el sistema"));
         }
 
     @Transactional
