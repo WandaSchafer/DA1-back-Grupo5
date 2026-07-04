@@ -1,14 +1,11 @@
 package com.example.authbackend.auth.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+@Data
+@Builder
+@AllArgsConstructor
 public class MessageResponse {
-
     private final String message;
-
-    public MessageResponse(String message) {
-        this.message = message;
-    }
-
-    public String getMessage() {
-        return message;
-    }
 }

@@ -19,8 +19,7 @@ public class ActivityService {
     private final UserRepository userRepository;
     private final UserPreferenceRepository userPreferenceRepository;
 
-    public ActivityService(ActivityRepository activityRepository, UserRepository userRepository,
-                          UserPreferenceRepository userPreferenceRepository) {
+    public ActivityService(ActivityRepository activityRepository, UserRepository userRepository, UserPreferenceRepository userPreferenceRepository) {
         this.activityRepository = activityRepository;
         this.userRepository = userRepository;
         this.userPreferenceRepository = userPreferenceRepository;

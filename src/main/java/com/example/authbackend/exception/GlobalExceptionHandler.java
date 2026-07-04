@@ -88,6 +88,7 @@ public class GlobalExceptionHandler {
                 null
         );
     }
+    
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ErrorResponse> handleResponseStatusException(ResponseStatusException ex,
                                                                     HttpServletRequest request) {

@@ -3,6 +3,15 @@ package com.example.authbackend.otp;
 import jakarta.persistence.*;
 import java.time.Instant;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(name = "otp_entries")
 public class OtpEntry {
@@ -20,43 +29,9 @@ public class OtpEntry {
     @Column(nullable = false)
     private Instant expiresAt;
 
-    public OtpEntry() {}
-
     public OtpEntry(String email, String hashedOtp, Instant expiresAt) {
         this.email = email;
         this.hashedOtp = hashedOtp;
-        this.expiresAt = expiresAt;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getHashedOtp() {
-        return hashedOtp;
-    }
-
-    public void setHashedOtp(String hashedOtp) {
-        this.hashedOtp = hashedOtp;
-    }
-
-    public Instant getExpiresAt() {
-        return expiresAt;
-    }
-
-    public void setExpiresAt(Instant expiresAt) {
         this.expiresAt = expiresAt;
     }
 }

@@ -352,24 +352,24 @@ public class ReservationService {
             ratingComment = rating.getComment();
         }
 
-        return new ReservationResponse(
-                r.getId(),
-                r.getActivity().getName(),
-                r.getActivity().getDestination(),
-                r.getActivity().getImageUrl(),
-                r.getAvailability().getDate(),
-                r.getAvailability().getTime(),
-                r.getParticipants(),
-                r.getStatus(),
-                r.getActivity().getGuideName(),
-                "Cancelación disponible hasta 24 hs antes",
-                r.getCreatedAt(),
-                r.getTotalPrice(),
-                r.getActivity().getId(),
-                activityScore,
-                guideScore,
-                ratingComment
-        );
+        return ReservationResponse.builder()
+            .id(r.getId())
+            .activityName(r.getActivity().getName())
+            .destination(r.getActivity().getDestination())
+            .imageUrl(r.getActivity().getImageUrl())
+            .date(r.getAvailability().getDate())
+            .time(r.getAvailability().getTime())
+            .participants(r.getParticipants())
+            .status(r.getStatus())
+            .guideName(r.getActivity().getGuideName())
+            .cancellationPolicy("Cancelación disponible hasta 24 hs antes")
+            .createdAt(r.getCreatedAt())
+            .totalPrice(r.getTotalPrice())
+            .activityId(r.getActivity().getId())
+            .activityScore(activityScore)
+            .guideScore(guideScore)
+            .ratingComment(ratingComment)
+            .build();
     }
 }
 

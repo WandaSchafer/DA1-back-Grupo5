@@ -1,11 +1,17 @@
 package com.example.authbackend.activity;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Data
 @Table(name = "activities")
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Activity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,6 +43,4 @@ public class Activity {
 
     @Column(name = "meeting_point_lng")
     private Double meetingPointLng;
-
-    public Activity() {}
 }

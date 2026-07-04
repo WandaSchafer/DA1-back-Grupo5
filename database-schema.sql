@@ -96,6 +96,7 @@ CREATE TABLE IF NOT EXISTS reservations (
     status VARCHAR(20) NOT NULL DEFAULT 'CONFIRMED',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    check_in_at DATETIME,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (activity_id) REFERENCES activities(id) ON DELETE CASCADE,
     FOREIGN KEY (availability_id) REFERENCES activity_availabilities(id) ON DELETE SET NULL,
@@ -104,7 +105,7 @@ CREATE TABLE IF NOT EXISTS reservations (
     INDEX idx_status (status),
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
+s
 -- =====================================================
 -- TABLA: otp_entries
 -- Descripción: Almacenamiento de códigos OTP temporales
