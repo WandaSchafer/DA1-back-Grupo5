@@ -1,0 +1,88 @@
+### =========================================================
+### ACTIVITY-CONTROLLER
+### Cubre: GET /api/v1/activities, GET /api/v1/activities/{id},
+###        GET /api/v1/activities/{id}/availability,
+###        GET /api/v1/activities/recommended
+### =========================================================
+@baseUrl = http://localhost:8080
+@email = viajero.test@xplorenow.com
+@password = Password123
+
+### Login (recomendado/preferencias personalizadas puede requerir auth)
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "{{email}}",
+  "password": "{{password}}"
+}
+
+@token = {{login.response.body.$.token}}
+
+### -----------------------------------------------------
+### 1. Catálogo paginado, sin filtros
+### page y size son required según el swagger
+### -----------------------------------------------------
+# @name listActivities
+GET {{baseUrl}}/api/v1/activities?page=0&size=10
+Authorization: Bearer {{token}}
+
+@firstActivityId = {{listActivities.response.body.$.content[0].id}}
+
+### 1.b Catálogo con filtro por destino
+GET {{baseUrl}}/api/v1/activities?page=0&size=10&destination=Bariloche
+Authorization: Bearer {{token}}
+
+### 1.c Catálogo con filtro por categoría
+GET {{baseUrl}}/api/v1/activities?page=0&size=10&category=Adventure
+Authorization: Bearer {{token}}
+
+### 1.d Catálogo con rango de precio
+GET {{baseUrl}}/api/v1/activities?page=0&size=10&minPrice=1000&maxPrice=20000
+Authorization: Bearer {{token}}
+
+### 1.e Catálogo con búsqueda por texto
+GET {{baseUrl}}/api/v1/activities?page=0&size=10&search=free tour
+Authorization: Bearer {{token}}
+
+### 1.f Catálogo combinando todos los filtros
+GET {{baseUrl}}/api/v1/activities?page=0&size=5&category=Adventure&destination=Bariloche&minPrice=0&maxPrice=50000&search=trekking
+Authorization: Bearer {{token}}
+
+### 1.g Página fuera de rango (debería devolver contenido vacío, no error)
+GET {{baseUrl}}/api/v1/activities?page=999&size=10
+Authorization: Bearer {{token}}
+
+### 1.h Falta parámetro required (size) -> debería devolver 400
+GET {{baseUrl}}/api/v1/activities?page=0
+Authorization: Bearer {{token}}
+
+### -----------------------------------------------------
+### 2. Detalle de una actividad
+### -----------------------------------------------------
+GET {{baseUrl}}/api/v1/activities/{{firstActivityId}}
+Authorization: Bearer {{token}}
+
+### 2.b Detalle con id inexistente (debería devolver 404)
+GET {{baseUrl}}/api/v1/activities/999999
+Authorization: Bearer {{token}}
+
+### -----------------------------------------------------
+### 3. Horarios/disponibilidad de una actividad
+### -----------------------------------------------------
+GET {{baseUrl}}/api/v1/activities/{{firstActivityId}}/availability
+Authorization: Bearer {{token}}
+
+### 3.b Disponibilidad de actividad inexistente (según swagger, 404 documentado)
+GET {{baseUrl}}/api/v1/activities/999999/availability
+Authorization: Bearer {{token}}
+
+### -----------------------------------------------------
+### 4. Actividades recomendadas (según preferencias del perfil)
+### -----------------------------------------------------
+GET {{baseUrl}}/api/v1/activities/recommended
+Authorization: Bearer {{token}}
+
+### 4.b Recomendadas sin token (ver si requiere auth o no)
+GET {{baseUrl}}/api/v1/activities/recommended

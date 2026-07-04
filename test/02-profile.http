@@ -1,0 +1,79 @@
+### =========================================================
+### USER-CONTROLLER
+### Cubre: GET /api/v1/users/me, PUT /api/v1/users/me
+### =========================================================
+@baseUrl = http://localhost:8080
+@email = viajero.test@xplorenow.com
+@password = Password123
+
+### Login previo para obtener token
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "{{email}}",
+  "password": "{{password}}"
+}
+
+@token = {{login.response.body.$.token}}
+
+### -----------------------------------------------------
+### 1. Ver mi perfil
+### -----------------------------------------------------
+GET {{baseUrl}}/api/v1/users/me
+Authorization: Bearer {{token}}
+
+### 1.b Ver perfil sin token (debería devolver 401)
+GET {{baseUrl}}/api/v1/users/me
+
+### -----------------------------------------------------
+### 2. Editar perfil: datos personales
+### -----------------------------------------------------
+PUT {{baseUrl}}/api/v1/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "username": "viajero_test",
+  "phone": "+54 9 11 5555-1234",
+  "profileImageUrl": "https://example.com/fotos/viajero.jpg",
+  "travelPreferences": "aventura,naturaleza"
+}
+
+### 2.b Editar perfil: solo preferencias de viaje (objeto anidado)
+### Nota: preferredCategory según enunciado sería algo como
+### "aventura" | "cultura" | "gastronomia" | "naturaleza" | "relax"
+PUT {{baseUrl}}/api/v1/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "username": "viajero_test",
+  "phone": "+54 9 11 5555-1234",
+  "travelPreferences": "aventura,naturaleza",
+  "preferences": {
+    "preferredCategory": "aventura",
+    "maxPrice": 15000.0,
+    "preferredDestination": "Bariloche",
+    "activityDuration": "full-day"
+  }
+}
+
+### 2.c Editar perfil sin foto (campo opcional omitido)
+PUT {{baseUrl}}/api/v1/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "username": "viajero_test",
+  "phone": "+54 9 11 5555-1234"
+}
+
+### 2.d Editar perfil sin token (debería devolver 401)
+PUT {{baseUrl}}/api/v1/users/me
+Content-Type: application/json
+
+{
+  "username": "viajero_test"
+}

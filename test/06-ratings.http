@@ -1,0 +1,122 @@
+### =========================================================
+### RATING-CONTROLLER
+### Cubre: GET /api/v1/ratings/activity/{activityId},
+###        POST /api/v1/ratings/activity/{activityId},
+###        GET /api/v1/ratings/my-ratings,
+###        GET /api/v1/ratings/activity/{activityId}/stats,
+###        DELETE /api/v1/ratings/{id}
+### =========================================================
+@baseUrl = http://localhost:8080
+@email = viajero.test@xplorenow.com
+@password = Password123
+
+### Login
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "{{email}}",
+  "password": "{{password}}"
+}
+
+@token = {{login.response.body.$.token}}
+
+### Traer un id de actividad real para calificar
+# @name listActivities
+GET {{baseUrl}}/api/v1/activities?page=0&size=1
+Authorization: Bearer {{token}}
+
+@activityId = {{listActivities.response.body.$.content[0].id}}
+
+### -----------------------------------------------------
+### 1. Crear calificación (actividad + guía por separado, dentro de 300 chars)
+### -----------------------------------------------------
+# @name createRating
+POST {{baseUrl}}/api/v1/ratings/activity/{{activityId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "activityScore": 5,
+  "guideScore": 4,
+  "comment": "Excelente experiencia, el guía fue muy atento y puntual."
+}
+
+### 1.b Crear calificación sin comentario (campo opcional)
+POST {{baseUrl}}/api/v1/ratings/activity/{{activityId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "activityScore": 4,
+  "guideScore": 5
+}
+
+### 1.c Puntaje fuera de rango (debería devolver 400, max=5)
+POST {{baseUrl}}/api/v1/ratings/activity/{{activityId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "activityScore": 7,
+  "guideScore": 3,
+  "comment": "Puntaje inválido de prueba"
+}
+
+### 1.d Comentario excede el máximo de 300 caracteres (debería devolver 400)
+POST {{baseUrl}}/api/v1/ratings/activity/{{activityId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "activityScore": 5,
+  "guideScore": 5,
+  "comment": "Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur excepteur sint occaecat cupidatat non proident"
+}
+
+### 1.e Actividad inexistente (debería devolver 404)
+POST {{baseUrl}}/api/v1/ratings/activity/999999
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "activityScore": 5,
+  "guideScore": 5
+}
+
+### -----------------------------------------------------
+### 2. Ver calificaciones de una actividad
+### -----------------------------------------------------
+GET {{baseUrl}}/api/v1/ratings/activity/{{activityId}}
+Authorization: Bearer {{token}}
+
+### -----------------------------------------------------
+### 3. Estadísticas de calificación de una actividad (promedios)
+### -----------------------------------------------------
+GET {{baseUrl}}/api/v1/ratings/activity/{{activityId}}/stats
+Authorization: Bearer {{token}}
+
+### -----------------------------------------------------
+### 4. Mis calificaciones
+### -----------------------------------------------------
+GET {{baseUrl}}/api/v1/ratings/my-ratings
+Authorization: Bearer {{token}}
+
+### -----------------------------------------------------
+### 5. Eliminar una calificación
+### NOTA: reemplazar {{ratingId}} por un id real devuelto en createRating
+### si la respuesta de createRating incluye "id" (el swagger la tipa como
+### objeto genérico, así que puede no traer el id explícito).
+### -----------------------------------------------------
+@ratingId = 1
+DELETE {{baseUrl}}/api/v1/ratings/{{ratingId}}
+Authorization: Bearer {{token}}
+
+### 5.b Eliminar calificación inexistente (debería devolver 404)
+DELETE {{baseUrl}}/api/v1/ratings/999999
+Authorization: Bearer {{token}}
+
+### 5.c Eliminar calificación de otro usuario (debería devolver 403, prueba de autorización)
+DELETE {{baseUrl}}/api/v1/ratings/1
+Authorization: Bearer {{token}}

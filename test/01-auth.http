@@ -1,0 +1,137 @@
+### =========================================================
+### AUTH-CONTROLLER
+### Cubre: /auth/register, /auth/otp/request, /auth/otp/verify,
+###        /auth/otp/resend, /auth/login
+### =========================================================
+@baseUrl = http://localhost:8080
+@email = viajero.test@xplorenow.com
+@username = viajero_test
+@password = Password123
+
+### -----------------------------------------------------
+### 1. Registro clásico (usuario + contraseña)
+### Nota: password debe cumplir regex: minúscula + mayúscula + dígito
+### -----------------------------------------------------
+# @name register
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "{{username}}",
+  "email": "{{email}}",
+  "password": "{{password}}",
+  "role": "USER"
+}
+
+### 1.b Registro con password inválida (debería devolver 400 por @pattern)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "otro_user",
+  "email": "otro@xplorenow.com",
+  "password": "sinnumero",
+  "role": "USER"
+}
+
+### 1.c Registro con username muy corto (minLength 3 -> 400)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "ab",
+  "email": "corto@xplorenow.com",
+  "password": "{{password}}",
+  "role": "USER"
+}
+
+### -----------------------------------------------------
+### 2. Flujo OTP: solicitar código
+### -----------------------------------------------------
+# @name requestOtp
+POST {{baseUrl}}/auth/otp/request
+Content-Type: application/json
+
+{
+  "email": "{{email}}"
+}
+
+### 2.b Reenvío de OTP (por si expiró o no llegó)
+# @name resendOtp
+POST {{baseUrl}}/auth/otp/resend
+Content-Type: application/json
+
+{
+  "email": "{{email}}"
+}
+
+### 2.c Verificar OTP
+### IMPORTANTE: reemplazar "123456" por el código real recibido
+### (mail/consola/log del backend) antes de ejecutar.
+# @name verifyOtp
+POST {{baseUrl}}/auth/otp/verify
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "otp": "123456"
+}
+
+@tokenOtp = {{verifyOtp.response.body.$.token}}
+
+### 2.d Verificar OTP con código inválido (formato correcto pero incorrecto -> 401/400 esperado)
+POST {{baseUrl}}/auth/otp/verify
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "otp": "000000"
+}
+
+### 2.e Verificar OTP con formato inválido (no son 6 dígitos -> 400 por @pattern)
+POST {{baseUrl}}/auth/otp/verify
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "otp": "abc123"
+}
+
+### -----------------------------------------------------
+### 3. Login clásico (usuario y contraseña)
+### -----------------------------------------------------
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "{{email}}",
+  "password": "{{password}}"
+}
+
+@token = {{login.response.body.$.token}}
+
+### 3.b Login con credenciales incorrectas (debería devolver 401)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "{{email}}",
+  "password": "PasswordIncorrecta1"
+}
+
+### 3.c Login usando username en vez de email (usernameOrEmail admite ambos)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "{{username}}",
+  "password": "{{password}}"
+}
+
+### -----------------------------------------------------
+### NOTA PARA EL RESTO DE LOS ARCHIVOS:
+### Copiá el valor de "token" obtenido en 3. Login (o en 2.c OTP)
+### y pegalo en la variable @token del resto de los .http,
+### o dejá que cada archivo haga su propio login (ya lo incluyen).
+### -----------------------------------------------------
