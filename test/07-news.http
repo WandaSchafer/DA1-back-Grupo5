@@ -1,0 +1,29 @@
+### =========================================================
+### NEWS-CONTROLLER
+### Cubre: GET /api/v1/news
+### =========================================================
+@baseUrl = http://localhost:8080
+@email = viajero.test@xplorenow.com
+@password = Password123
+
+### Login (probar también si este endpoint es público)
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "{{email}}",
+  "password": "{{password}}"
+}
+
+@token = {{login.response.body.$.token}}
+
+### -----------------------------------------------------
+### 1. Listado de noticias/ofertas/destinos destacados
+### -----------------------------------------------------
+GET {{baseUrl}}/api/v1/news
+Authorization: Bearer {{token}}
+
+### 1.b Sin token (para chequear si es público, ya que las noticias
+### suelen mostrarse en Home sin requerir sesión)
+GET {{baseUrl}}/api/v1/news

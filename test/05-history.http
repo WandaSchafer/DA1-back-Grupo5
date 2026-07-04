@@ -1,0 +1,44 @@
+### =========================================================
+### ACTIVITY-HISTORY-CONTROLLER
+### Cubre: GET /api/v1/history
+### =========================================================
+@baseUrl = http://localhost:8080
+@email = viajero.test@xplorenow.com
+@password = Password123
+
+### Login
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "{{email}}",
+  "password": "{{password}}"
+}
+
+@token = {{login.response.body.$.token}}
+
+### -----------------------------------------------------
+### 1. Historial completo (sin filtros)
+### -----------------------------------------------------
+GET {{baseUrl}}/api/v1/history
+Authorization: Bearer {{token}}
+
+### 1.b Filtro por rango de fechas
+GET {{baseUrl}}/api/v1/history?fromDate=2026-01-01&toDate=2026-06-30
+Authorization: Bearer {{token}}
+
+### 1.c Filtro por destino
+GET {{baseUrl}}/api/v1/history?destination=Bariloche
+Authorization: Bearer {{token}}
+
+### 1.d Filtro combinado: destino + rango de fechas
+GET {{baseUrl}}/api/v1/history?fromDate=2026-01-01&toDate=2026-12-31&destination=Mendoza
+Authorization: Bearer {{token}}
+
+### 1.e Rango de fechas sin resultados (fechas futuras lejanas)
+GET {{baseUrl}}/api/v1/history?fromDate=2030-01-01&toDate=2030-12-31
+Authorization: Bearer {{token}}
+
+### 1.f Sin token (debería devolver 401)
+GET {{baseUrl}}/api/v1/history

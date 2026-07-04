@@ -1,0 +1,215 @@
+### =========================================================
+### RESERVATION-CONTROLLER
+### Cubre: POST /api/v1/reservations, GET /api/v1/reservations/{id},
+###        PATCH /api/v1/reservations/{id}/cancel,
+###        PUT /api/v1/reservations/{id}/reschedule,
+###        POST /api/v1/reservations/{id}/check-in,
+###        GET /api/v1/reservations/me,
+###        GET /api/v1/reservations/updates
+### =========================================================
+@baseUrl = http://localhost:8080
+@email = viajero.test@xplorenow.com
+@password = Password123
+
+### Login
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "{{email}}",
+  "password": "{{password}}"
+}
+
+@token = {{login.response.body.$.token}}
+
+### Traer un id de actividad real del catálogo para reservar
+# @name listActivities
+GET {{baseUrl}}/api/v1/activities?page=0&size=1
+Authorization: Bearer {{token}}
+
+@activityId = {{listActivities.response.body.$.content[0].id}}
+
+### Traer un slot de disponibilidad REAL para esa actividad
+### (no podemos inventar fecha/hora: tiene que existir en activity_availabilities)
+# @name availability
+GET {{baseUrl}}/api/v1/activities/{{activityId}}/availability
+Authorization: Bearer {{token}}
+
+@slotDate = {{availability.response.body.$[0].date}}
+@slotTime = {{availability.response.body.$[0].time}}
+
+### Si la actividad tiene más de un slot cargado, tomamos un segundo
+### para usar en el reschedule (si no existe, va a fallar con "Horario no
+### disponible" igual que nos pasó recién — en ese caso, cargá más filas
+### en insert-availabilities.sql o probá con otra activityId)
+@slotDate2 = {{availability.response.body.$[1].date}}
+@slotTime2 = {{availability.response.body.$[1].time}}
+
+### -----------------------------------------------------
+### 1. Crear una reserva (con validación de cupos en tiempo real)
+### Usa el primer slot devuelto por /availability de arriba
+### -----------------------------------------------------
+# @name createReservation
+POST {{baseUrl}}/api/v1/reservations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "activityId": {{activityId}},
+  "date": "{{slotDate}}",
+  "time": "{{slotTime}}",
+  "participants": 2
+}
+
+@reservationId = {{createReservation.response.body.$.id}}
+
+### 1.b Crear reserva con cupos excesivos
+### IMPORTANTE: no puede usar el mismo activityId+slot que el request "1.",
+### porque el backend chequea PRIMERO "¿ya tenés una reserva en este horario?"
+### y recién DESPUÉS valida cupos (ver ReservationService.createReservation).
+### Si reusáramos el mismo slot, siempre fallaría con 400 "ya tenés una
+### reserva activa" y nunca llegaríamos a probar la validación de cupos.
+### Por eso usamos una SEGUNDA actividad (content[1] del catálogo) que el
+### usuario todavía no reservó.
+# @name listActivities2
+GET {{baseUrl}}/api/v1/activities?page=0&size=2
+Authorization: Bearer {{token}}
+
+@activityId2 = {{listActivities2.response.body.$.content[1].id}}
+
+# @name availability2
+GET {{baseUrl}}/api/v1/activities/{{activityId2}}/availability
+Authorization: Bearer {{token}}
+
+@slotDate2b = {{availability2.response.body.$[0].date}}
+@slotTime2b = {{availability2.response.body.$[0].time}}
+
+### Ahora sí: mismo usuario, actividad/slot sin reserva previa,
+### participantes muy por encima de availableSlots -> debería dar
+### "No hay cupos" (RuntimeException -> revisar que el GlobalExceptionHandler
+### lo mapee a 400, hoy probablemente cae en el catch-all de 500)
+POST {{baseUrl}}/api/v1/reservations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "activityId": {{activityId2}},
+  "date": "{{slotDate2b}}",
+  "time": "{{slotTime2b}}",
+  "participants": 999999
+}
+
+### 1.c Crear reserva con actividad inexistente (debería devolver 404)
+POST {{baseUrl}}/api/v1/reservations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "activityId": 999999,
+  "date": "2026-08-15",
+  "time": "09:30:00",
+  "participants": 1
+}
+
+### 1.d Crear reserva sin token (debería devolver 401)
+POST {{baseUrl}}/api/v1/reservations
+Content-Type: application/json
+
+{
+  "activityId": {{activityId}},
+  "date": "{{slotDate}}",
+  "time": "{{slotTime}}",
+  "participants": 1
+}
+
+### -----------------------------------------------------
+### 2. Ver detalle de una reserva
+### -----------------------------------------------------
+GET {{baseUrl}}/api/v1/reservations/{{reservationId}}
+Authorization: Bearer {{token}}
+
+### 2.b Reserva inexistente (debería devolver 404)
+GET {{baseUrl}}/api/v1/reservations/999999
+Authorization: Bearer {{token}}
+
+### -----------------------------------------------------
+### 3. Mis reservas ("Mis actividades")
+### -----------------------------------------------------
+GET {{baseUrl}}/api/v1/reservations/me
+Authorization: Bearer {{token}}
+
+### -----------------------------------------------------
+### 4. Reprogramar reserva (cambia fecha/hora/participantes)
+### -----------------------------------------------------
+PUT {{baseUrl}}/api/v1/reservations/{{reservationId}}/reschedule
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "date": "{{slotDate2}}",
+  "time": "{{slotTime2}}",
+  "participants": 3
+}
+
+### 4.b Reprogramar reserva inexistente (debería devolver 404)
+PUT {{baseUrl}}/api/v1/reservations/999999/reschedule
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "date": "2026-08-20",
+  "time": "14:00:00",
+  "participants": 1
+}
+
+### -----------------------------------------------------
+### 5. Check-in por QR en el punto de encuentro
+### -----------------------------------------------------
+POST {{baseUrl}}/api/v1/reservations/{{reservationId}}/check-in?qrCode=QR-TEST-VALIDO-123
+Authorization: Bearer {{token}}
+
+### 5.b Check-in con QR inválido (debería mostrar error/rojo en la app)
+POST {{baseUrl}}/api/v1/reservations/{{reservationId}}/check-in?qrCode=QR-INVALIDO
+Authorization: Bearer {{token}}
+
+### -----------------------------------------------------
+### 6. Sincronización / actualizaciones (modo offline -> vuelve la conexión)
+### lastCheck: timestamp ISO de la última sincronización local
+### -----------------------------------------------------
+GET {{baseUrl}}/api/v1/reservations/updates?lastCheck=2026-07-01T00:00:00
+Authorization: Bearer {{token}}
+
+### 6.b Falta parámetro required lastCheck (debería devolver 400)
+GET {{baseUrl}}/api/v1/reservations/updates
+Authorization: Bearer {{token}}
+
+### -----------------------------------------------------
+### 7. Cancelar reserva (con política de cancelación aplicable)
+### Dejar al final: crea una segunda reserva para no romper el check-in de arriba
+### -----------------------------------------------------
+# @name createReservationToCancel
+POST {{baseUrl}}/api/v1/reservations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "activityId": {{activityId}},
+  "date": "{{slotDate}}",
+  "time": "{{slotTime}}",
+  "participants": 1
+}
+
+@reservationToCancelId = {{createReservationToCancel.response.body.$.id}}
+
+###
+PATCH {{baseUrl}}/api/v1/reservations/{{reservationToCancelId}}/cancel
+Authorization: Bearer {{token}}
+
+### 7.b Cancelar una reserva ya cancelada (probar idempotencia / error de estado)
+PATCH {{baseUrl}}/api/v1/reservations/{{reservationToCancelId}}/cancel
+Authorization: Bearer {{token}}
+
+### 7.c Cancelar reserva inexistente (debería devolver 404)
+PATCH {{baseUrl}}/api/v1/reservations/999999/cancel
+Authorization: Bearer {{token}}

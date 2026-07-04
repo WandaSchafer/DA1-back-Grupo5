@@ -18,102 +18,52 @@ import org.springframework.web.server.ResponseStatusException;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex,
-                                                          HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest request) {
         Map<String, String> validations = new LinkedHashMap<>();
         for (FieldError error : ex.getBindingResult().getFieldErrors()) {
             validations.put(error.getField(), error.getDefaultMessage());
         }
-
-        return buildResponse(
-                HttpStatus.BAD_REQUEST,
-                "Error de validacion",
-                "La solicitud contiene datos invalidos",
-                request.getRequestURI(),
-                validations
-        );
+        return buildResponse(HttpStatus.BAD_REQUEST, "Error de validacion","La solicitud contiene datos invalidos", request.getRequestURI(), validations);
     }
 
     @ExceptionHandler({BadCredentialsException.class, InvalidCredentialsException.class, UsernameNotFoundException.class})
     public ResponseEntity<ErrorResponse> handleUnauthorized(RuntimeException ex, HttpServletRequest request) {
-        return buildResponse(
-                HttpStatus.UNAUTHORIZED,
-                "No autorizado",
-                "Credenciales invalidas",
-                request.getRequestURI(),
-                null
-        );
+        return buildResponse(HttpStatus.UNAUTHORIZED, "No autorizado", "Credenciales invalidas", request.getRequestURI(), null);
     }
 
     @ExceptionHandler({BadRequestException.class, OtpValidationException.class})
     public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException ex, HttpServletRequest request) {
-        return buildResponse(
-                HttpStatus.BAD_REQUEST,
-                "Solicitud invalida",
-                ex.getMessage(),
-                request.getRequestURI(),
-                null
-        );
+        return buildResponse(HttpStatus.BAD_REQUEST, "Solicitud invalida", ex.getMessage(), request.getRequestURI(), null);
     }
 
     @ExceptionHandler(ResourceConflictException.class)
     public ResponseEntity<ErrorResponse> handleConflict(ResourceConflictException ex, HttpServletRequest request) {
-        return buildResponse(
-                HttpStatus.CONFLICT,
-                "Conflicto",
-                ex.getMessage(),
-                request.getRequestURI(),
-                null
-        );
+        return buildResponse(HttpStatus.CONFLICT, "Conflicto", ex.getMessage(), request.getRequestURI(), null);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
-        return buildResponse(
-                HttpStatus.NOT_FOUND,
-                "No encontrado",
-                ex.getMessage(),
-                request.getRequestURI(),
-                null
-        );
+        return buildResponse(HttpStatus.NOT_FOUND, "No encontrado", ex.getMessage(), request.getRequestURI(), null);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex, HttpServletRequest request) {
-        return buildResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "Error interno",
-                "Ocurrio un error inesperado",
-                request.getRequestURI(),
-                null
-        );
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno", "Ocurrio un error inesperado", request.getRequestURI(), null);
     }
+    
     @ExceptionHandler(ResponseStatusException.class)
-    public ResponseEntity<ErrorResponse> handleResponseStatusException(ResponseStatusException ex,
-                                                                    HttpServletRequest request) {
-        return buildResponse(
-                HttpStatus.valueOf(ex.getStatusCode().value()),
-                ex.getStatusCode().toString(),
-                ex.getReason() != null ? ex.getReason() : "Error en la solicitud",
-                request.getRequestURI(),
-                null
-        );
+    public ResponseEntity<ErrorResponse> handleResponseStatusException(ResponseStatusException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.valueOf(ex.getStatusCode().value()), ex.getStatusCode().toString(), ex.getReason() != null ? ex.getReason() : "Error en la solicitud", request.getRequestURI(), null);
     }
 
-    private ResponseEntity<ErrorResponse> buildResponse(HttpStatus status,
-                                                        String error,
-                                                        String message,
-                                                        String path,
-                                                        Map<String, String> validations) {
-        ErrorResponse response = new ErrorResponse(
-                LocalDateTime.now(),
-                status.value(),
-                error,
-                message,
-                path,
-                validations
-        );
-
+    private ResponseEntity<ErrorResponse> buildResponse(HttpStatus status, String error, String message, String path, Map<String, String> validations) {
+        ErrorResponse response = new ErrorResponse(LocalDateTime.now(), status.value(), error, message, path, validations);
         return ResponseEntity.status(status).body(response);
     }
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.FORBIDDEN, "Acceso denegado", "No tienes permisos suficientes", request.getRequestURI(), null);
+    }
+    
 }

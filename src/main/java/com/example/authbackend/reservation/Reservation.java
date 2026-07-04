@@ -28,13 +28,11 @@ public class Reservation {
     @JoinColumn(name = "availability_id")
     private ActivityAvailability availability;
 
-    private int participants;
-
     @Enumerated(EnumType.STRING)
     private ReservationStatus status;
-
-    private LocalDateTime createdAt;
     
+    private int participants;
+    private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime checkInAt;
 
@@ -50,15 +48,7 @@ public class Reservation {
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
-
-    public LocalDateTime getCheckInAt() {
-        return checkInAt;
-    }
-
-    public void setCheckInAt(LocalDateTime checkInAt) {
-        this.checkInAt = checkInAt;
-    }
-
+    
     public double getTotalPrice() {
         return (activity != null) ? (activity.getPrice() * participants) : 0;
     }

@@ -22,9 +22,7 @@ public class ActivityController {
     private final ActivityAvailabilityService activityAvailabilityService;
     private final ActivityService activityService;
 
-    public ActivityController(ActivityRepository activityRepository,
-                              ActivityAvailabilityService activityAvailabilityService,
-                              ActivityService activityService) {
+    public ActivityController(ActivityRepository activityRepository, ActivityAvailabilityService activityAvailabilityService, ActivityService activityService) {
         this.activityRepository = activityRepository;
         this.activityAvailabilityService = activityAvailabilityService;
         this.activityService = activityService;

@@ -1,0 +1,25 @@
+### 1. LOGIN
+# @name login
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "aportilla",
+  "password": "Lz1*Y39tp:w(i.Wfr-0'q\\k10"
+}
+
+### 2. OBTENER ACTIVIDADES
+GET http://localhost:8080/api/v1/activities?page=0&size=5
+
+### 3. RESERVAR (Usa la variable del login)
+@token = {{login.response.body.token}}
+POST http://localhost:8080/api/v1/reservations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "activityId": 1,
+  "date": "2026-07-15",
+  "time": "09:00:00",
+  "participants": 2
+}
