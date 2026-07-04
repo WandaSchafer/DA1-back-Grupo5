@@ -1,6 +1,7 @@
 package com.example.authbackend.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.security.access.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -61,9 +62,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(response);
     }
 
-    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
-        return buildResponse(HttpStatus.FORBIDDEN, "Acceso denegado", "No tienes permisos suficientes", request.getRequestURI(), null);
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(
+            AccessDeniedException ex,
+            HttpServletRequest request) {
+
+        return buildResponse(
+                HttpStatus.FORBIDDEN,
+                "Acceso denegado",
+                "No tienes permisos suficientes",
+                request.getRequestURI(),
+                null
+        );
     }
     
 }
