@@ -1,9 +1,12 @@
 package com.example.authbackend.reservation;
 
 import com.example.authbackend.activity.*;
+import com.example.authbackend.exception.BadRequestException;
+import com.example.authbackend.exception.ResourceNotFoundException;
 import com.example.authbackend.rating.Rating;
 import com.example.authbackend.user.User;
 import com.example.authbackend.user.UserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 
 import org.springframework.http.HttpStatus;
@@ -14,6 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import com.example.authbackend.rating.RatingRepository;
 
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 @Service
@@ -41,29 +47,28 @@ public class ReservationService {
                 Authentication authentication = securityContext.getAuthentication();
 
                 if (authentication == null || !authentication.isAuthenticated()) {
-                // Fallback a getDefaultUser() para compatibilidad
-                        return getDefaultUser();
-                }
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no autenticado");
+        }
 
-                // Intenta extraer email directamente si es CustomUserDetails
-                if (authentication.getPrincipal() instanceof com.example.authbackend.security.user.CustomUserDetails customUserDetails) {
-                        String email = customUserDetails.getEmail();
-                        return userRepository.findByEmail(email)
-                                .orElse(getDefaultUser());
-                }
+        // Intenta extraer email directamente si es CustomUserDetails
+        if (authentication.getPrincipal() instanceof com.example.authbackend.security.user.CustomUserDetails customUserDetails) {
+            String email = customUserDetails.getEmail();
+            return userRepository.findByEmail(email)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no autenticado"));
+        }
 
-                // Fallback: authentication.getName() devuelve username o email del JWT
-                String principal = authentication.getName();
+        // Fallback: authentication.getName() devuelve username o email del JWT
+        String principal = authentication.getName();
 
-                // Intenta buscar por email primero (si contiene @)
-                if (principal.contains("@")) {
-                        return userRepository.findByEmail(principal)
-                                .orElse(getDefaultUser());
-                }
+        // Intenta buscar por email primero (si contiene @)
+        if (principal != null && principal.contains("@")) {
+            return userRepository.findByEmail(principal)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no autenticado"));
+        }
 
-                // Si no contiene @, busca por username (insensible a mayúsculas)
-                return userRepository.findByUsername(principal)
-                        .orElse(getDefaultUser());
+        // Si no contiene @, busca por username
+        return userRepository.findByUsername(principal)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no autenticado"));
     }
 
     /**
@@ -168,73 +173,183 @@ public class ReservationService {
         return map(saved);
 }
 
-        public List<ReservationResponse> getMyReservations() {
+    @Transactional
+    public void checkInReservation(Long id, String qrCode) {
+        Reservation r = reservationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Reserva no encontrada"));
 
-                User user = getAuthenticatedUser();
-
-                return reservationRepository.findByUserIdOrderByCreatedAtDesc(user.getId())
-                        .stream()
-                        .map(this::map)
-                        .toList();
+        User user = getAuthenticatedUser();
+        if (!r.getUser().getId().equals(user.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "No tienes permiso para completar el check-in de esta reserva"
+            );
         }
+
+        if (r.getStatus() == ReservationStatus.CANCELLED || r.getStatus() == ReservationStatus.FINISHED) {
+            throw new BadRequestException("Código QR inválido o expirado");
+        }
+
+        CheckInQrPayload payload = parseQrCode(qrCode);
+
+        String storedGuideName = r.getActivity().getGuideName();
+        String qrGuideName = payload.getGuideName();
+        boolean guideMatches = (storedGuideName == null || storedGuideName.isBlank())
+                ? (qrGuideName == null || qrGuideName.isBlank())
+                : storedGuideName.equals(qrGuideName == null ? null : qrGuideName.trim());
+
+        if (payload == null
+                || payload.getAction() == null
+                || !payload.getAction().equals("check-in")
+                || payload.getActivityId() == null
+                || !payload.getActivityId().equals(r.getActivity().getId())
+                || !guideMatches) {
+            throw new BadRequestException("Código QR inválido o expirado");
+        }
+
+        r.setStatus(ReservationStatus.FINISHED);
+        r.setCheckInAt(parseTimestamp(payload.getTimestamp()));
+
+        reservationRepository.save(r);
+    }
+
+    private CheckInQrPayload parseQrCode(String qrCode) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(qrCode, CheckInQrPayload.class);
+        } catch (Exception ex) {
+            throw new BadRequestException("Código QR inválido o expirado");
+        }
+    }
+
+    private LocalDateTime parseTimestamp(String timestamp) {
+        if (timestamp == null || timestamp.isBlank()) {
+            throw new BadRequestException("Código QR inválido o expirado");
+        }
+
+        try {
+            return OffsetDateTime.parse(timestamp).toLocalDateTime();
+        } catch (DateTimeParseException ex) {
+            throw new BadRequestException("Código QR inválido o expirado");
+        }
+    }
+
+    private static class CheckInQrPayload {
+        private String action;
+        private Long activityId;
+        private String guideName;
+        private String timestamp;
+
+        public String getAction() {
+            return action;
+        }
+
+        public void setAction(String action) {
+            this.action = action;
+        }
+
+        public Long getActivityId() {
+            return activityId;
+        }
+
+        public void setActivityId(Long activityId) {
+            this.activityId = activityId;
+        }
+
+        public String getGuideName() {
+            return guideName;
+        }
+
+        public void setGuideName(String guideName) {
+            this.guideName = guideName;
+        }
+
+        public String getTimestamp() {
+            return timestamp;
+        }
+
+        public void setTimestamp(String timestamp) {
+            this.timestamp = timestamp;
+        }
+    }
+
+    public List<ReservationResponse> getMyReservations() {
+        User user = getAuthenticatedUser();
+        return reservationRepository.findByUserIdOrderByCreatedAtDesc(user.getId())
+                .stream()
+                .map(this::map)
+                .toList();
+    }
+
+    public ReservationResponse getReservationById(Long id) {
+        Reservation r = reservationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Reserva no encontrada"));
+
+        User user = getAuthenticatedUser();
+        if (!r.getUser().getId().equals(user.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso para ver esta reserva");
+        }
+
+        return map(r);
+    }
 
     @Transactional
-        public ReservationResponse rescheduleReservation(Long id, RescheduleRequest request) {
-                Reservation r = reservationRepository.findById(id)
+    public ReservationResponse rescheduleReservation(Long id, RescheduleRequest request) {
+        Reservation r = reservationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Reserva no encontrada"));
 
-                User user = getAuthenticatedUser();
+        User user = getAuthenticatedUser();
 
-                if (!r.getUser().getId().equals(user.getId())) {
-                        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso para reprogramar esta reserva");
-                }
-
-                if (r.getStatus() == ReservationStatus.CANCELLED || r.getStatus() == ReservationStatus.FINISHED) {
-                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se puede reprogramar esta reserva");
-                }
-
-                ActivityAvailability newAvailability = availabilityRepository
-                        .findByActivityIdAndDateAndTime(
-                                r.getActivity().getId(),
-                                request.getDate(),
-                                request.getTime()
-                        )
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "El nuevo horario no está disponible"));
-
-                if (newAvailability.getAvailableSlots() < request.getParticipants()) {
-                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No hay suficientes cupos disponibles");
-                }
-
-                ActivityAvailability oldAvailability = r.getAvailability();
-                oldAvailability.setReservedSlots(Math.max(oldAvailability.getReservedSlots() - r.getParticipants(), 0));
-                availabilityRepository.save(oldAvailability);
-
-                newAvailability.setReservedSlots(newAvailability.getReservedSlots() + request.getParticipants());
-                availabilityRepository.save(newAvailability);
-
-                r.setAvailability(newAvailability);
-                r.setParticipants(request.getParticipants());
-
-                Reservation saved = reservationRepository.save(r);
-
-                return map(saved);
+        if (!r.getUser().getId().equals(user.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso para reprogramar esta reserva");
         }
 
-        private ReservationResponse map(Reservation r) {
-                User user = r.getUser();
+        if (r.getStatus() == ReservationStatus.CANCELLED || r.getStatus() == ReservationStatus.FINISHED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se puede reprogramar esta reserva");
+        }
 
-                Rating rating = ratingRepository
-                        .findByUserIdAndActivityId(user.getId(), r.getActivity().getId())
-                        .orElse(null);
+        ActivityAvailability newAvailability = availabilityRepository
+                .findByActivityIdAndDateAndTime(
+                        r.getActivity().getId(),
+                        request.getDate(),
+                        request.getTime()
+                )
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "El nuevo horario no está disponible"));
 
-                Integer activityScore = null;
-                Integer guideScore = null;
-                String ratingComment = null;
+        if (newAvailability.getAvailableSlots() < request.getParticipants()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No hay suficientes cupos disponibles");
+        }
+
+        ActivityAvailability oldAvailability = r.getAvailability();
+        oldAvailability.setReservedSlots(Math.max(oldAvailability.getReservedSlots() - r.getParticipants(), 0));
+        availabilityRepository.save(oldAvailability);
+
+        newAvailability.setReservedSlots(newAvailability.getReservedSlots() + request.getParticipants());
+        availabilityRepository.save(newAvailability);
+
+        r.setAvailability(newAvailability);
+        r.setParticipants(request.getParticipants());
+
+        Reservation saved = reservationRepository.save(r);
+
+        return map(saved);
+    }
+
+    private ReservationResponse map(Reservation r) {
+        User user = r.getUser();
+
+        Rating rating = ratingRepository
+                .findByUserIdAndActivityId(user.getId(), r.getActivity().getId())
+                .orElse(null);
+
+        Integer activityScore = null;
+        Integer guideScore = null;
+        String ratingComment = null;
 
         if (rating != null) {
-                activityScore = rating.getActivityScore();
-                guideScore = rating.getGuideScore();
-                ratingComment = rating.getComment();
+            activityScore = rating.getActivityScore();
+            guideScore = rating.getGuideScore();
+            ratingComment = rating.getComment();
         }
 
         return new ReservationResponse(
@@ -246,6 +361,7 @@ public class ReservationService {
                 r.getAvailability().getTime(),
                 r.getParticipants(),
                 r.getStatus(),
+                r.getActivity().getGuideName(),
                 "Cancelación disponible hasta 24 hs antes",
                 r.getCreatedAt(),
                 r.getTotalPrice(),
@@ -253,6 +369,7 @@ public class ReservationService {
                 activityScore,
                 guideScore,
                 ratingComment
-                );
-        }
+        );
+    }
 }
+

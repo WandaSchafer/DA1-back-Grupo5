@@ -36,6 +36,7 @@ public class Reservation {
     private LocalDateTime createdAt;
     
     private LocalDateTime updatedAt;
+    private LocalDateTime checkInAt;
 
     @PrePersist
     public void prePersist() {
@@ -48,6 +49,14 @@ public class Reservation {
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public LocalDateTime getCheckInAt() {
+        return checkInAt;
+    }
+
+    public void setCheckInAt(LocalDateTime checkInAt) {
+        this.checkInAt = checkInAt;
     }
 
     public double getTotalPrice() {

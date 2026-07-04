@@ -1,0 +1,1 @@
+{   "action": "check-in",   "activityId": id-actividad,   "guideName": "Nombre-Guia",   "timestamp": "2023-10-27T10:00:00Z" }
