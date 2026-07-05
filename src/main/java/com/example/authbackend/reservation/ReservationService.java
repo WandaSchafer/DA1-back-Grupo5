@@ -330,6 +330,8 @@ public class ReservationService {
         r.setAvailability(newAvailability);
         r.setParticipants(request.getParticipants());
 
+        r.setStatus(ReservationStatus.RESCHEDULED);
+
         Reservation saved = reservationRepository.save(r);
 
         return map(saved);
