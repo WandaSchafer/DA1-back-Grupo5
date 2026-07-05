@@ -24,10 +24,8 @@ public class ActivityHistoryService {
     }
 
     private User getDefaultUser() {
-        return userRepository.findAll()
-                .stream()
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("No hay usuarios cargados"));
+        return userRepository.findById(2L)
+                .orElseThrow(() -> new RuntimeException("No existe el usuario 2"));
     }
 
     public List<ActivityHistoryItemResponse> getHistory(LocalDate fromDate,
