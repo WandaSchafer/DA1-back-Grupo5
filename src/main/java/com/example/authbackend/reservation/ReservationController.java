@@ -70,15 +70,16 @@ public class ReservationController {
             List<Reservation> changes = reservationRepository.findRecentUpdates(lastCheck);
 
             if (!changes.isEmpty()) {
-                List<ReservationUpdateResponse> response = changes.stream().map(r -> 
-                    new ReservationUpdateResponse(
-                        r.getId(),
-                        r.getActivity().getName(),
-                        r.getStatus().name(),
-                        "Estado actualizado a: " + r.getStatus(),
-                        r.getUpdatedAt()
-                    )
-                ).toList();
+                List<ReservationUpdateResponse> response = changes.stream()
+                        .map(r -> new ReservationUpdateResponse(
+                                r.getId(),
+                                r.getActivity().getId(),
+                                r.getActivity().getName(),
+                                r.getStatus().name(),
+                                "Estado actualizado a: " + r.getStatus(),
+                                r.getUpdatedAt()
+                        ))
+                        .toList();
                 
                 return ResponseEntity.ok(response);
             }

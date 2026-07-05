@@ -10,8 +10,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ReservationUpdateResponse {
     private Long reservationId;
+    private Long activityId;
     private String activityName;
-    private String status; 
+    private String status;
     private String message;
     private LocalDateTime updatedAt;
 }
